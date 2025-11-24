@@ -1,0 +1,126 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(222, 89, 31, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(222, 89, 31, 0.1) 0%, transparent 50%);
+  z-index: 0;
+}
+
+.login-card {
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  width: 100%;
+  max-width: 450px;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.login-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.login-logo-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--c-brand), #ff6a2f);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.login-header h1 {
+  font-family: var(--font-bold);
+  font-size: 2rem;
+  color: var(--c-text-cream);
+  margin-bottom: var(--spacing-xs);
+}
+
+.login-header p {
+  color: var(--c-text);
+  opacity: 0.8;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.login-footer {
+  text-align: center;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--c-border);
+}
+
+.login-demo-info {
+  background-color: rgba(222, 89, 31, 0.1);
+  border: 1px solid var(--c-brand);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-size: 0.875rem;
+  color: var(--c-text-cream);
+}
+
+.login-demo-info strong {
+  font-family: var(--font-bold);
+  color: var(--c-brand);
+}
+
+.login-copyright {
+  font-size: 0.875rem;
+  color: var(--c-text);
+  opacity: 0.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: var(--spacing-md);
+  }
+
+  .login-card {
+    padding: var(--spacing-xl);
+  }
+
+  .login-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .login-logo-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 2.5rem;
+  }
+}

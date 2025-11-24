@@ -1,0 +1,186 @@
+.materials {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.materials-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: var(--spacing-lg);
+}
+
+.materials-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+}
+
+.materials-header h1 {
+  font-family: var(--font-bold);
+  font-size: 2rem;
+  color: var(--c-text-cream);
+  margin-bottom: var(--spacing-xs);
+}
+
+.materials-header p {
+  color: var(--c-text);
+  opacity: 0.7;
+  margin: 0;
+}
+
+.materials-filters {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.search-box {
+  grid-column: 1;
+}
+
+.view-toggle {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.materials-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.material-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.material-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.material-header h3 {
+  font-family: var(--font-bold);
+  font-size: 1.125rem;
+  color: var(--c-text-cream);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.material-code {
+  font-size: 0.875rem;
+  color: var(--c-brand);
+  margin: var(--spacing-xs) 0 0;
+  font-family: monospace;
+}
+
+.material-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+  margin-bottom: var(--spacing-md);
+}
+
+.material-info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.material-info-item .label {
+  color: var(--c-text);
+  opacity: 0.7;
+}
+
+.material-info-item span:last-child {
+  color: var(--c-text-cream);
+  font-family: var(--font-bold);
+}
+
+.quantity-highlight {
+  color: var(--c-success) !important;
+  font-size: 1rem !important;
+}
+
+.material-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--c-border);
+}
+
+.material-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--c-text);
+  opacity: 0.7;
+  padding: var(--spacing-2xl);
+  margin: 0;
+}
+
+@media (max-width: 1024px) {
+  .materials-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box {
+    grid-column: 1;
+  }
+
+  .materials-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .materials-header {
+    flex-direction: column;
+  }
+
+  .materials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .view-toggle {
+    order: -1;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .material-actions {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,103 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ============================================
+    // FUNCIONES DE SEGURIDAD
+    // ============================================
+    
+    // Verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Validar que el archivo sea una imagen
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Validar extensiones permitidas
+    function hasValidExtension() {
+      return request.resource.contentType in [
+        'image/jpeg',
+        'image/jpg', 
+        'image/png',
+        'image/webp',
+        'image/gif'
+      ];
+    }
+    
+    // ============================================
+    // CARPETA: MATERIALS (Imágenes de materiales)
+    // ============================================
+    match /materials/{materialId}/{fileName} {
+      // Todos los usuarios autenticados pueden ver imágenes de materiales
+      allow read: if isAuthenticated();
+      
+      // Solo usuarios autenticados pueden subir/actualizar imágenes
+      allow write: if isAuthenticated() &&
+                     // Validar que sea una imagen
+                     isImage() &&
+                     // Validar extensión
+                     hasValidExtension() &&
+                     // Tamaño máximo: 5MB
+                     request.resource.size < 5 * 1024 * 1024 &&
+                     // Validar nombre de archivo (sin caracteres especiales peligrosos)
+                     fileName.matches('^[a-zA-Z0-9_.-]+$');
+      
+      // Solo usuarios autenticados pueden eliminar imágenes
+      allow delete: if isAuthenticated();
+    }
+    
+    // ============================================
+    // CARPETA: AVATARS (Fotos de perfil - uso futuro)
+    // ============================================
+    match /avatars/{userId}/{fileName} {
+      // Todos los usuarios autenticados pueden ver avatares
+      allow read: if isAuthenticated();
+      
+      // Solo el usuario puede subir/actualizar su propio avatar
+      allow write: if isAuthenticated() &&
+                     request.auth.uid == userId &&
+                     isImage() &&
+                     hasValidExtension() &&
+                     // Tamaño máximo: 2MB para avatares
+                     request.resource.size < 2 * 1024 * 1024 &&
+                     fileName.matches('^[a-zA-Z0-9_.-]+$');
+      
+      // Solo el usuario puede eliminar su propio avatar
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // CARPETA: DOCUMENTS (Documentos adjuntos - uso futuro)
+    // ============================================
+    match /documents/{documentId}/{fileName} {
+      // Solo usuarios autenticados pueden leer documentos
+      allow read: if isAuthenticated();
+      
+      // Solo usuarios autenticados pueden subir documentos
+      allow write: if isAuthenticated() &&
+                     // Tipos de archivo permitidos
+                     request.resource.contentType in [
+                       'application/pdf',
+                       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                       'text/plain',
+                       'text/csv'
+                     ] &&
+                     // Tamaño máximo: 10MB
+                     request.resource.size < 10 * 1024 * 1024 &&
+                     fileName.matches('^[a-zA-Z0-9_.-]+$');
+      
+      allow delete: if isAuthenticated();
+    }
+    
+    // ============================================
+    // DENEGAR TODO LO DEMÁS
+    // ============================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
