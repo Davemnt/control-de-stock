@@ -1,14 +1,53 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
+    <!-- Configuración del conjunto de caracteres UTF-8 para soportar caracteres especiales españoles -->
     <meta charset="UTF-8" />
+
+    <!-- Ícono que aparece en la pestaña del navegador (favicon) -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- 
+      Configuración responsive: 
+      - width=device-width: El ancho de la página se ajusta al ancho del dispositivo
+      - initial-scale=1.0: Zoom inicial al 100%
+      Esto hace que la aplicación se vea bien en móviles, tablets y escritorio
+    -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Sistema profesional de Control de Stock para productora técnica de eventos" />
+
+    <!-- 
+      Meta descripción para SEO (motores de búsqueda como Google)
+      Este texto aparece en los resultados de búsqueda
+    -->
+    <meta
+      name="description"
+      content="Sistema profesional de Control de Stock para productora técnica de eventos"
+    />
+
+    <!-- Título que aparece en la pestaña del navegador -->
     <title>Control de Stock | Sistema Profesional</title>
   </head>
   <body>
+    <!-- Script de seguridad para proteger el código fuente -->
+    <script src="/security.js"></script>
+    <!-- 
+      Div principal donde React montará toda la aplicación
+      Este es el "punto de entrada" visual de tu aplicación
+      React busca este elemento con id="root" para insertar todo el contenido
+    -->
     <div id="root"></div>
+
+    <!-- 
+      Script principal que carga toda la aplicación React
+      - type="module": Indica que es un módulo de JavaScript moderno (permite usar import/export)
+      - src="/src/main.jsx": Ruta al archivo principal de entrada de React
+      
+      Este script ejecuta todo el código de tu aplicación:
+      1. Carga React
+      2. Configura el router (navegación entre páginas)
+      3. Configura Firebase (autenticación y base de datos)
+      4. Renderiza la aplicación en el div #root
+    -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

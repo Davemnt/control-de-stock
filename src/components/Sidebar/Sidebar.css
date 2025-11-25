@@ -165,6 +165,7 @@
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
   }
 
   .sidebar-open {
@@ -180,9 +181,34 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: calc(var(--z-fixed) - 1);
+    animation: fadeIn 0.2s ease-out;
   }
 
   .sidebar-close {
     display: flex;
+  }
+
+  .sidebar-user {
+    padding: var(--spacing-md);
+  }
+
+  .sidebar-user-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 260px;
+  }
+
+  .sidebar-header {
+    padding: var(--spacing-md);
+  }
+
+  .sidebar-logo h2 {
+    font-size: 1.125rem;
   }
 }

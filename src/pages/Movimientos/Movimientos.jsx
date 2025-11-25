@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Search,
   TrendingUp,
   TrendingDown,
-  ArrowRightLeft
-} from 'lucide-react';
+  ArrowRightLeft,
+} from "lucide-react";
 import {
   collection,
   query,
@@ -15,40 +15,36 @@ import {
   getDoc,
   updateDoc,
   serverTimestamp,
-  orderBy
-} from 'firebase/firestore';
-import { db } from '../../firebase';
-import { useAuth } from '../../contexts/AuthContext';
-import {
-  COLLECTIONS,
-  MOVEMENT_TYPES,
-  MOVEMENT_LABELS
-} from '../../constants';
-import { formatDateTime } from '../../utils/formatters';
-import Layout from '../../components/Layout/Layout';
-import Card from '../../components/Card/Card';
-import Button from '../../components/Button/Button';
-import Input from '../../components/Input/Input';
-import Badge from '../../components/Badge/Badge';
-import Modal from '../../components/Modal/Modal';
-import toast from 'react-hot-toast';
-import './Movimientos.css';
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { useAuth } from "../../contexts/AuthContext";
+import { COLLECTIONS, MOVEMENT_TYPES, MOVEMENT_LABELS } from "../../constants";
+import { formatDateTime } from "../../utils/formatters";
+import Layout from "../../components/Layout/Layout";
+import Card from "../../components/Card/Card";
+import Button from "../../components/Button/Button";
+import Input from "../../components/Input/Input";
+import Badge from "../../components/Badge/Badge";
+import Modal from "../../components/Modal/Modal";
+import toast from "react-hot-toast";
+import "./Movimientos.css";
 
 const Movimientos = () => {
-  const { userData, isAdmin, isUser } = useAuth();
+  const { userData, isAdmin, isUser, currentUser } = useAuth();
   const [movements, setMovements] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [filteredMovements, setFilteredMovements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    materialId: '',
+    materialId: "",
     type: MOVEMENT_TYPES.ENTRADA,
     quantity: 0,
-    reason: '',
-    project: '',
-    notes: ''
+    reason: "",
+    project: "",
+    notes: "",
   });
 
   useEffect(() => {
@@ -62,27 +58,29 @@ const Movimientos = () => {
   const loadData = async () => {
     try {
       // Load materials
-      const materialsSnapshot = await getDocs(collection(db, COLLECTIONS.MATERIALS));
-      const materialsData = materialsSnapshot.docs.map(doc => ({
+      const materialsSnapshot = await getDocs(
+        collection(db, COLLECTIONS.MATERIALS)
+      );
+      const materialsData = materialsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setMaterials(materialsData);
 
       // Load movements
       const movementsQuery = query(
         collection(db, COLLECTIONS.MOVEMENTS),
-        orderBy('createdAt', 'desc')
+        orderBy("createdAt", "desc")
       );
       const movementsSnapshot = await getDocs(movementsQuery);
-      const movementsData = movementsSnapshot.docs.map(doc => ({
+      const movementsData = movementsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setMovements(movementsData);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Error al cargar datos');
+      console.error("Error loading data:", error);
+      toast.error("Error al cargar datos");
     } finally {
       setLoading(false);
     }
@@ -92,10 +90,11 @@ const Movimientos = () => {
     let filtered = [...movements];
 
     if (searchTerm) {
-      filtered = filtered.filter(mov =>
-        mov.materialName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mov.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mov.project?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (mov) =>
+          mov.materialName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          mov.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          mov.project?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -106,14 +105,16 @@ const Movimientos = () => {
     e.preventDefault();
 
     if (!formData.materialId || !formData.quantity || formData.quantity <= 0) {
-      toast.error('Completa todos los campos requeridos');
+      toast.error("Completa todos los campos requeridos");
       return;
     }
 
     try {
-      const materialDoc = await getDoc(doc(db, COLLECTIONS.MATERIALS, formData.materialId));
+      const materialDoc = await getDoc(
+        doc(db, COLLECTIONS.MATERIALS, formData.materialId)
+      );
       if (!materialDoc.exists()) {
-        toast.error('Material no encontrado');
+        toast.error("Material no encontrado");
         return;
       }
 
@@ -121,57 +122,64 @@ const Movimientos = () => {
       let newQuantity = material.quantity || 0;
 
       // Calculate new quantity based on movement type
-      if (formData.type === MOVEMENT_TYPES.ENTRADA || formData.type === MOVEMENT_TYPES.DEVOLUCION) {
+      if (
+        formData.type === MOVEMENT_TYPES.ENTRADA ||
+        formData.type === MOVEMENT_TYPES.DEVOLUCION
+      ) {
         newQuantity += parseInt(formData.quantity);
       } else if (formData.type === MOVEMENT_TYPES.SALIDA) {
         if (newQuantity < parseInt(formData.quantity)) {
-          toast.error('Stock insuficiente');
+          toast.error("Stock insuficiente");
           return;
         }
         newQuantity -= parseInt(formData.quantity);
       }
 
       // Create movement
-      await addDoc(collection(db, COLLECTIONS.MOVEMENTS), {
+      const movementData = {
         materialId: formData.materialId,
         materialName: material.name,
-        materialCode: material.code,
+        materialCode: material.code || "",
         type: formData.type,
         quantity: parseInt(formData.quantity),
         reason: formData.reason,
-        project: formData.project || null,
-        notes: formData.notes || null,
+        project: formData.project || "",
+        notes: formData.notes || "",
         previousQuantity: material.quantity || 0,
         newQuantity: newQuantity,
         createdAt: serverTimestamp(),
-        createdBy: userData.uid,
-        userName: userData.name
-      });
+        createdBy: currentUser?.uid || userData?.uid || "unknown",
+        createdByName: userData?.name || "Usuario",
+        fromLocation: material.location || "Sin ubicación",
+        toLocation: material.location || "Sin ubicación",
+      };
+
+      await addDoc(collection(db, COLLECTIONS.MOVEMENTS), movementData);
 
       // Update material quantity
       await updateDoc(doc(db, COLLECTIONS.MATERIALS, formData.materialId), {
         quantity: newQuantity,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
-      toast.success('Movimiento registrado');
+      toast.success("Movimiento registrado");
       setShowModal(false);
       resetForm();
       loadData();
     } catch (error) {
-      console.error('Error creating movement:', error);
-      toast.error('Error al registrar movimiento');
+      console.error("Error creating movement:", error);
+      toast.error("Error al registrar movimiento");
     }
   };
 
   const resetForm = () => {
     setFormData({
-      materialId: '',
+      materialId: "",
       type: MOVEMENT_TYPES.ENTRADA,
       quantity: 0,
-      reason: '',
-      project: '',
-      notes: ''
+      reason: "",
+      project: "",
+      notes: "",
     });
   };
 
@@ -191,11 +199,11 @@ const Movimientos = () => {
     switch (type) {
       case MOVEMENT_TYPES.ENTRADA:
       case MOVEMENT_TYPES.DEVOLUCION:
-        return 'success';
+        return "success";
       case MOVEMENT_TYPES.SALIDA:
-        return 'warning';
+        return "warning";
       default:
-        return 'info';
+        return "info";
     }
   };
 
@@ -244,7 +252,7 @@ const Movimientos = () => {
           </Card>
         ) : (
           <div className="movements-list">
-            {filteredMovements.map(movement => {
+            {filteredMovements.map((movement) => {
               const Icon = getMovementIcon(movement.type);
               const color = getMovementColor(movement.type);
 
@@ -266,7 +274,9 @@ const Movimientos = () => {
                   <div className="movement-details">
                     <div className="movement-detail-item">
                       <span className="label">Cantidad:</span>
-                      <span className="value">{movement.quantity} unidades</span>
+                      <span className="value">
+                        {movement.quantity} unidades
+                      </span>
                     </div>
                     <div className="movement-detail-item">
                       <span className="label">Stock anterior:</span>
@@ -274,7 +284,9 @@ const Movimientos = () => {
                     </div>
                     <div className="movement-detail-item">
                       <span className="label">Stock nuevo:</span>
-                      <span className="value highlight">{movement.newQuantity}</span>
+                      <span className="value highlight">
+                        {movement.newQuantity}
+                      </span>
                     </div>
                     {movement.reason && (
                       <div className="movement-detail-item">
@@ -291,9 +303,13 @@ const Movimientos = () => {
                   </div>
 
                   <div className="movement-footer">
-                    <p className="movement-user">{movement.userName || 'Usuario'}</p>
+                    <p className="movement-user">
+                      {movement.userName || "Usuario"}
+                    </p>
                     <p className="movement-date">
-                      {formatDateTime(movement.createdAt?.toDate?.() || new Date())}
+                      {formatDateTime(
+                        movement.createdAt?.toDate?.() || new Date()
+                      )}
                     </p>
                   </div>
                 </Card>
@@ -318,11 +334,13 @@ const Movimientos = () => {
               <select
                 className="input"
                 value={formData.materialId}
-                onChange={(e) => setFormData({ ...formData, materialId: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, materialId: e.target.value })
+                }
                 required
               >
                 <option value="">Seleccionar material...</option>
-                {materials.map(mat => (
+                {materials.map((mat) => (
                   <option key={mat.id} value={mat.id}>
                     {mat.name} ({mat.code}) - Stock: {mat.quantity}
                   </option>
@@ -335,11 +353,15 @@ const Movimientos = () => {
               <select
                 className="input"
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
                 required
               >
                 {Object.entries(MOVEMENT_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -349,7 +371,9 @@ const Movimientos = () => {
               type="number"
               name="quantity"
               value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, quantity: e.target.value })
+              }
               min="1"
               required
             />
@@ -358,7 +382,9 @@ const Movimientos = () => {
               label="Motivo"
               name="reason"
               value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, reason: e.target.value })
+              }
               placeholder="Ej: Evento corporativo, Mantenimiento preventivo..."
               required
             />
@@ -367,7 +393,9 @@ const Movimientos = () => {
               label="Proyecto / Evento"
               name="project"
               value={formData.project}
-              onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, project: e.target.value })
+              }
               placeholder="Opcional"
             />
 
@@ -376,7 +404,9 @@ const Movimientos = () => {
               type="textarea"
               name="notes"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
               rows={3}
             />
 

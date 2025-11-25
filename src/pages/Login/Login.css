@@ -14,9 +14,16 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 50%, rgba(222, 89, 31, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(222, 89, 31, 0.1) 0%, transparent 50%);
+  background: radial-gradient(
+      circle at 20% 50%,
+      rgba(222, 89, 31, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(222, 89, 31, 0.1) 0%,
+      transparent 50%
+    );
   z-index: 0;
 }
 
@@ -105,6 +112,54 @@
   margin: 0;
 }
 
+/* Password toggle styles */
+.password-input-container {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--c-text);
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+  background-color: var(--c-surface-light);
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--c-brand);
+  opacity: 1;
+}
+
+/* Ajustar el padding del input para hacer espacio al ícono */
+.password-input-container .input-wrapper input {
+  padding-right: 48px !important;
+}
+
+/* Botón de login más compacto */
+.login-form .button {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .login-container {
     padding: var(--spacing-md);
@@ -122,5 +177,16 @@
     width: 64px;
     height: 64px;
     font-size: 2.5rem;
+  }
+
+  .password-toggle {
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+  }
+
+  .password-input-container .input-wrapper input {
+    padding-right: 44px !important;
   }
 }

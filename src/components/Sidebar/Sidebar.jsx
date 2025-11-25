@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
@@ -9,10 +9,10 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
-} from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import './Sidebar.css';
+  X,
+} from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import "./Sidebar.css";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -22,62 +22,60 @@ const Sidebar = ({ isOpen, onClose }) => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error("Error logging out:", error);
     }
   };
 
   const menuItems = [
     {
-      path: '/',
+      path: "/",
       icon: LayoutDashboard,
-      label: 'Dashboard',
-      roles: ['admin', 'user', 'guest']
+      label: "Dashboard",
+      roles: ["admin", "user", "guest"],
     },
     {
-      path: '/materiales',
+      path: "/materiales",
       icon: Package,
-      label: 'Materiales',
-      roles: ['admin', 'user', 'guest']
+      label: "Materiales",
+      roles: ["admin", "user", "guest"],
     },
     {
-      path: '/movimientos',
+      path: "/movimientos",
       icon: ArrowLeftRight,
-      label: 'Movimientos',
-      roles: ['admin', 'user']
+      label: "Movimientos",
+      roles: ["admin", "user"],
     },
     {
-      path: '/historial',
+      path: "/historial",
       icon: History,
-      label: 'Historial',
-      roles: ['admin', 'user', 'guest']
+      label: "Historial",
+      roles: ["admin", "user", "guest"],
     },
     {
-      path: '/usuarios',
+      path: "/usuarios",
       icon: Users,
-      label: 'Usuarios',
-      roles: ['admin']
+      label: "Usuarios",
+      roles: ["admin"],
     },
     {
-      path: '/configuracion',
+      path: "/configuracion",
       icon: Settings,
-      label: 'Configuración',
-      roles: ['admin']
-    }
+      label: "Configuración",
+      roles: ["admin", "user", "guest"],
+    },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
+  const filteredMenuItems = menuItems.filter((item) =>
     item.roles.includes(userData?.role)
   );
 
   return (
     <>
-      {isOpen && (
-        <div className="sidebar-backdrop" onClick={onClose}></div>
-      )}
-      
-      <aside className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+      {isOpen && <div className="sidebar-backdrop" onClick={onClose}></div>}
+
+      <aside className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <Package size={32} />
@@ -93,13 +91,16 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         <div className="sidebar-user">
           <div className="sidebar-user-avatar">
-            {userData?.name?.charAt(0).toUpperCase() || 'U'}
+            {userData?.name?.charAt(0).toUpperCase() || "U"}
           </div>
           <div className="sidebar-user-info">
-            <p className="sidebar-user-name">{userData?.name || 'Usuario'}</p>
+            <p className="sidebar-user-name">{userData?.name || "Usuario"}</p>
             <p className="sidebar-user-role">
-              {userData?.role === 'admin' ? 'Administrador' : 
-               userData?.role === 'user' ? 'Usuario' : 'Invitado'}
+              {userData?.role === "admin"
+                ? "Administrador"
+                : userData?.role === "user"
+                ? "Usuario"
+                : "Invitado"}
             </p>
           </div>
         </div>
@@ -113,7 +114,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+                className={`sidebar-nav-item ${isActive ? "active" : ""}`}
                 onClick={onClose}
               >
                 <Icon size={20} />

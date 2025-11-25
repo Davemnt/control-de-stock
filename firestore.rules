@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============================================
-    // FUNCIONES DE SEGURIDAD Y VALIDACIÓN
+    // FUNCIONES DE SEGURIDAD SIMPLIFICADAS
     // ============================================
     
     // Verificar si el usuario está autenticado
@@ -11,159 +11,61 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Obtener datos del usuario actual
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-    
-    // Verificar si el usuario es administrador
-    function isAdmin() {
-      return isAuthenticated() && getUserData().role == 'admin';
-    }
-    
-    // Verificar si el usuario puede escribir (admin o user)
-    function canWrite() {
-      return isAuthenticated() && 
-             (getUserData().role == 'admin' || getUserData().role == 'user');
-    }
-    
-    // Verificar si el usuario está activo
-    function isActiveUser() {
-      return isAuthenticated() && getUserData().active == true;
-    }
-    
-    // Validar estructura de usuario
-    function isValidUser(user) {
-      return user.keys().hasAll(['email', 'name', 'role', 'active', 'createdAt']) &&
-             user.email is string &&
-             user.name is string &&
-             user.role in ['admin', 'user', 'guest'] &&
-             user.active is bool &&
-             user.createdAt is timestamp;
-    }
-    
-    // Validar estructura de material
-    function isValidMaterial(material) {
-      return material.keys().hasAll(['name', 'category', 'quantity', 'location', 'status', 'createdAt', 'updatedAt', 'createdBy']) &&
-             material.name is string &&
-             material.category in ['Audio', 'Iluminación', 'Video', 'Rigging', 'Estructuras', 'Cables', 'Mochilas Técnicas', 'Repuestos'] &&
-             material.quantity is number &&
-             material.quantity >= 0 &&
-             material.location is string &&
-             material.status in ['disponible', 'en_uso', 'mantenimiento', 'reparacion', 'baja'] &&
-             material.createdAt is timestamp &&
-             material.updatedAt is timestamp &&
-             material.createdBy is string;
-    }
-    
-    // Validar estructura de movimiento
-    function isValidMovement(movement) {
-      return movement.keys().hasAll(['materialId', 'materialName', 'type', 'quantity', 'fromLocation', 'toLocation', 'reason', 'createdAt', 'createdBy', 'createdByName']) &&
-             movement.materialId is string &&
-             movement.materialName is string &&
-             movement.type in ['entrada', 'salida', 'transferencia', 'ajuste'] &&
-             movement.quantity is number &&
-             movement.quantity > 0 &&
-             movement.fromLocation is string &&
-             movement.toLocation is string &&
-             movement.reason is string &&
-             movement.createdAt is timestamp &&
-             movement.createdBy is string &&
-             movement.createdByName is string;
-    }
-    
     // ============================================
     // COLECCIÓN: USERS
     // ============================================
     match /users/{userId} {
-      // Los usuarios autenticados pueden leer todos los perfiles
-      allow read: if isAuthenticated() && isActiveUser();
-      
-      // Solo administradores pueden crear nuevos usuarios
-      allow create: if isAdmin() && 
-                      isActiveUser() &&
-                      isValidUser(request.resource.data);
-      
-      // Solo administradores pueden actualizar usuarios
-      // No pueden cambiar el email una vez creado
-      allow update: if isAdmin() && 
-                      isActiveUser() &&
-                      isValidUser(request.resource.data) &&
-                      request.resource.data.email == resource.data.email;
-      
-      // Solo administradores pueden eliminar usuarios
-      // No pueden eliminar su propia cuenta
-      allow delete: if isAdmin() && 
-                      isActiveUser() &&
-                      userId != request.auth.uid;
+      allow read, write: if isAuthenticated();
+    }
+    
+    // ============================================
+    // COLECCIÓN: DEMO_USERS (Usuarios demo separados)
+    // ============================================
+    match /demo_users/{userId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // ============================================
+    // COLECCIONES DEMO (Datos separados para demostración)
+    // ============================================
+    match /demo_materials/{materialId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /demo_movements/{movementId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /demo_logs/{logId} {
+      allow read, write: if isAuthenticated();
     }
     
     // ============================================
     // COLECCIÓN: MATERIALS
     // ============================================
     match /materials/{materialId} {
-      // Todos los usuarios autenticados y activos pueden leer materiales
-      allow read: if isAuthenticated() && isActiveUser();
-      
-      // Administradores y usuarios pueden crear materiales
-      allow create: if canWrite() && 
-                      isActiveUser() &&
-                      isValidMaterial(request.resource.data) &&
-                      request.resource.data.createdBy == request.auth.uid;
-      
-      // Administradores y usuarios pueden actualizar materiales
-      // No pueden cambiar createdAt ni createdBy
-      allow update: if canWrite() && 
-                      isActiveUser() &&
-                      isValidMaterial(request.resource.data) &&
-                      request.resource.data.createdAt == resource.data.createdAt &&
-                      request.resource.data.createdBy == resource.data.createdBy;
-      
-      // Solo administradores pueden eliminar materiales
-      allow delete: if isAdmin() && isActiveUser();
+      allow read, write: if isAuthenticated();
     }
     
     // ============================================
-    // COLECCIÓN: MOVEMENTS (Auditoría inmutable)
+    // COLECCIÓN: MOVEMENTS
     // ============================================
     match /movements/{movementId} {
-      // Todos los usuarios autenticados pueden leer movimientos
-      allow read: if isAuthenticated() && isActiveUser();
-      
-      // Administradores y usuarios pueden crear movimientos
-      // Los movimientos deben tener el UID del creador correcto
-      allow create: if canWrite() && 
-                      isActiveUser() &&
-                      isValidMovement(request.resource.data) &&
-                      request.resource.data.createdBy == request.auth.uid;
-      
-      // INMUTABILIDAD: Los movimientos NO pueden modificarse ni eliminarse
-      // Esto garantiza la integridad del historial de auditoría
-      allow update: if false;
-      allow delete: if false;
+      allow read, write: if isAuthenticated();
     }
     
     // ============================================
-    // COLECCIÓN: LOGS (Solo lectura para admins)
+    // COLECCIÓN: LOGS
     // ============================================
     match /logs/{logId} {
-      // Solo administradores pueden leer logs del sistema
-      allow read: if isAdmin() && isActiveUser();
-      
-      // Los logs solo pueden ser escritos por Cloud Functions
-      // Nunca desde el cliente
-      allow write: if false;
+      allow read, write: if isAuthenticated();
     }
     
     // ============================================
-    // COLECCIÓN: SYSTEM_CONFIG (Configuración global)
+    // COLECCIÓN: SYSTEM_CONFIG
     // ============================================
     match /system/{configId} {
-      // Solo administradores pueden leer configuración
-      allow read: if isAdmin() && isActiveUser();
-      
-      // Solo administradores pueden modificar configuración
-      allow write: if isAdmin() && isActiveUser();
+      allow read, write: if isAuthenticated();
     }
     
     // ============================================

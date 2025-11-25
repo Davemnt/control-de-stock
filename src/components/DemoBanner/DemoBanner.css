@@ -1,0 +1,93 @@
+.demo-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.demo-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.demo-banner-content strong {
+  font-family: var(--font-bold);
+  letter-spacing: 0.5px;
+}
+
+.demo-credentials {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.9;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 4px;
+}
+
+.demo-credentials strong {
+  font-family: var(--font-bold);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin: 0 4px;
+}
+
+/* Ajustar el layout cuando hay banner */
+.app-wrapper.has-demo-banner {
+  padding-top: 80px;
+}
+
+.app-wrapper.has-demo-banner .layout {
+  padding-top: 0;
+}
+
+@media (max-width: 768px) {
+  .demo-banner {
+    padding: 10px 15px;
+  }
+
+  .demo-banner-content {
+    font-size: 12px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .demo-credentials {
+    font-size: 11px;
+  }
+
+  .app-wrapper.has-demo-banner {
+    padding-top: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-banner-content svg {
+    display: none;
+  }
+
+  .demo-credentials {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}

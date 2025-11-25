@@ -8,19 +8,30 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "switch:demo": "node switch-client.js demo",
+    "switch:cliente1": "node switch-client.js cliente1",
+    "switch:cliente2": "node switch-client.js cliente2",
+    "switch:production": "node switch-client.js production",
+    "dev:demo": "npm run switch:demo && vite",
+    "dev:cliente1": "npm run switch:cliente1 && vite",
+    "build:demo": "npm run switch:demo && vite build",
+    "build:cliente1": "npm run switch:cliente1 && vite build",
+    "build:production": "npm run switch:production && vite build"
   },
   "dependencies": {
+    "date-fns": "^3.3.1",
+    "dotenv": "^17.2.3",
+    "firebase": "^10.8.0",
+    "html5-qrcode": "^2.3.8",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
+    "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.22.0",
-    "firebase": "^10.8.0",
-    "date-fns": "^3.3.1",
-    "lucide-react": "^0.344.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
-    "xlsx": "^0.18.5",
-    "react-hot-toast": "^2.4.1"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

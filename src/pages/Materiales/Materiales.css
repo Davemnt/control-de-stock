@@ -34,6 +34,12 @@
   margin: 0;
 }
 
+.materials-header-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
 .materials-filters {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
@@ -139,12 +145,112 @@
   gap: var(--spacing-lg);
 }
 
+/* Nuevo diseño por secciones */
+.form-section {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+}
+
+.form-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--c-brand);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.form-row {
+  display: grid;
+  gap: var(--spacing-md);
+  align-items: end;
+}
+
+.form-col-full {
+  grid-column: 1 / -1;
+}
+
+.form-col-1 {
+  grid-column: span 1;
+}
+
+.form-col-2 {
+  grid-column: span 1;
+}
+
+.form-col-3 {
+  grid-column: span 1;
+}
+
+/* Filas de 2 columnas */
+.form-row:has(.form-col-2) {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Filas de 3 columnas */
+.form-row:has(.form-col-3) {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Botón escaner */
+.scanner-button {
+  margin-top: var(--spacing-lg);
+  width: 100%;
+  height: 48px;
+}
+
 .empty-state {
   text-align: center;
   color: var(--c-text);
   opacity: 0.7;
   padding: var(--spacing-2xl);
   margin: 0;
+}
+
+.input-with-scanner {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-end;
+  grid-column: span 1;
+}
+
+.input-with-scanner .input-group {
+  flex: 1;
+}
+
+.input-with-scanner .input-wrapper {
+  flex: 1;
+  width: 100%;
+}
+
+.input-with-scanner button {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  height: 48px;
+  padding: 0 var(--spacing-md);
+  min-width: auto;
+}
+
+/* Asegurar que el campo código tenga la misma altura que nombre */
+.form-grid .input-with-scanner {
+  display: contents;
+}
+
+.input-with-scanner > * {
+  grid-column: span 1;
+}
+
+.input-with-scanner .input-wrapper {
+  grid-column: span 1;
+}
+
+.input-with-scanner button {
+  grid-column: span 1;
+  align-self: end;
+  margin-bottom: 2px;
 }
 
 @media (max-width: 1024px) {
@@ -174,6 +280,20 @@
     grid-template-columns: 1fr;
   }
 
+  .form-row:has(.form-col-2),
+  .form-row:has(.form-col-3) {
+    grid-template-columns: 1fr;
+  }
+
+  .form-col-1,
+  .form-col-2,
+  .form-col-3 {
+    grid-column: span 1;
+  }
+
+  .form-section {
+    padding: var(--spacing-md);
+  }
   .view-toggle {
     order: -1;
     width: 100%;

@@ -1,0 +1,117 @@
+.configuracion {
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.config-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.config-header h1 {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.config-header p {
+  color: var(--c-text-secondary);
+}
+
+.config-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--spacing-md);
+}
+
+.config-section {
+  padding: var(--spacing-lg);
+}
+
+.config-section + .config-section {
+  border-top: 1px solid var(--c-border);
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.config-section-header h2 {
+  font-size: 1.25rem;
+  margin-bottom: var(--spacing-xs);
+}
+
+.config-section-header p {
+  color: var(--c-text-secondary);
+  font-size: 0.875rem;
+}
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  transition: var(--transition-base);
+}
+
+.category-item:hover {
+  border-color: var(--c-brand);
+}
+
+.category-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.category-key {
+  font-size: 0.875rem;
+  color: var(--c-text-secondary);
+  font-family: monospace;
+}
+
+.category-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.category-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .configuracion {
+    padding: var(--spacing-md);
+  }
+
+  .config-section-header {
+    flex-direction: column;
+  }
+
+  .category-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .category-actions {
+    justify-content: flex-end;
+  }
+}

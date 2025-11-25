@@ -32,3 +32,7 @@ firebase-debug.log
 .env
 .env.local
 .env.production
+.env.backup
+.env.cliente*
+!.env.example
+!.env.demo
