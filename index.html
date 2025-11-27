@@ -6,6 +6,10 @@
 
     <!-- Ícono que aparece en la pestaña del navegador (favicon) -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link
+      rel="alternate icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23DE591F' rx='4'/><path d='M8 10h16v2H8V10zm0 4h16v2H8v-2zm0 4h12v2H8v-2zm0 4h8v2H8v-2z' fill='white'/></svg>"
+    />
 
     <!-- 
       Configuración responsive: 
@@ -28,26 +32,8 @@
     <title>Control de Stock | Sistema Profesional</title>
   </head>
   <body>
-    <!-- Script de seguridad para proteger el código fuente -->
     <script src="/security.js"></script>
-    <!-- 
-      Div principal donde React montará toda la aplicación
-      Este es el "punto de entrada" visual de tu aplicación
-      React busca este elemento con id="root" para insertar todo el contenido
-    -->
     <div id="root"></div>
-
-    <!-- 
-      Script principal que carga toda la aplicación React
-      - type="module": Indica que es un módulo de JavaScript moderno (permite usar import/export)
-      - src="/src/main.jsx": Ruta al archivo principal de entrada de React
-      
-      Este script ejecuta todo el código de tu aplicación:
-      1. Carga React
-      2. Configura el router (navegación entre páginas)
-      3. Configura Firebase (autenticación y base de datos)
-      4. Renderiza la aplicación en el div #root
-    -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

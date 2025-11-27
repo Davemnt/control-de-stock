@@ -121,7 +121,7 @@ export const COLLECTIONS = {
   LOGS: "logs",
 };
 
-// Helper para obtener nombre de colección según el usuario
+// Helper para obtener nombre de coleccion segun el usuario
 export const getCollection = (collectionName) => {
   const isDemoMode = () => {
     const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");

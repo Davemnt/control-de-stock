@@ -40,85 +40,91 @@ import "./index.css"; // Estilos globales de la aplicación
  * - Crea un "root" de React donde se montará toda la aplicación
  * - Es la forma moderna de renderizar React (React 18+)
  */
-ReactDOM.createRoot(document.getElementById("root")).render(
-  /*
-   * React.StrictMode:
-   * - Modo de desarrollo que activa comprobaciones adicionales
-   * - Detecta problemas potenciales en la aplicación
-   * - Solo funciona en desarrollo, no afecta producción
-   * - Puede causar que algunos efectos se ejecuten 2 veces (es normal)
-   */
-  <React.StrictMode>
-    {/*
-     * BrowserRouter:
-     * - Habilita el sistema de navegación de React Router
-     * - Permite usar <Link> en lugar de <a> para navegación sin recarga
-     * - Maneja el historial del navegador (botones atrás/adelante)
-     * - DEBE envolver toda la aplicación si usas React Router
-     */}
-    <BrowserRouter>
-      {/*
-       * AuthProvider:
-       * - Proveedor de contexto de autenticación
-       * - Proporciona datos del usuario a TODA la aplicación
-       * - Contiene funciones: login(), logout(), register()
-       * - Cualquier componente hijo puede acceder a estos datos con useAuth()
-       * - Se conecta con Firebase Authentication
-       */}
-      <AuthProvider>
-        {/*
-         * App:
-         * - Componente principal que contiene todas las rutas
-         * - Define qué página mostrar según la URL
-         * - Maneja las rutas protegidas (solo usuarios logueados)
-         */}
-        <App />
+// Capturar errores de inicialización
+try {
+  const rootElement = document.getElementById("root");
 
-        {/*
-         * Toaster:
-         * - Sistema de notificaciones toast
-         * - Muestra mensajes de éxito, error, info
-         * - Se configura aquí para que funcione en TODA la aplicación
-         * - Personalizado con los colores del tema dark
-         *
-         * position="top-right": Las notificaciones aparecen arriba a la derecha
-         * toastOptions: Configuración de estilo y duración
-         */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            // Duración en milisegundos (4000ms = 4 segundos)
-            duration: 4000,
+  if (!rootElement) {
+    throw new Error("No se encontró el elemento #root en el HTML");
+  }
 
-            // Estilos personalizados usando variables CSS del tema
-            style: {
-              background: "var(--c-surface)", // Color de fondo del toast
-              color: "var(--c-text)", // Color del texto
-              border: "1px solid var(--c-border)", // Borde sutil
-              fontFamily: "var(--font-base)", // Tipografía consistente
-            },
-
-            // Personalización del ícono de éxito (✓)
-            success: {
-              iconTheme: {
-                primary: "var(--c-success)", // Verde
-                secondary: "var(--c-white)", // Blanco
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: "var(--c-surface, #ffffff)",
+                color: "var(--c-text, #000000)",
+                border: "1px solid var(--c-border, #e0e0e0)",
+                fontFamily: "var(--font-base, Arial, sans-serif)",
               },
-            },
-
-            // Personalización del ícono de error (✕)
-            error: {
-              iconTheme: {
-                primary: "var(--c-error)", // Rojo
-                secondary: "var(--c-white)", // Blanco
+              success: {
+                iconTheme: {
+                  primary: "var(--c-success, #4CAF50)",
+                  secondary: "var(--c-white, #ffffff)",
+                },
               },
-            },
-          }}
-        />
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>
-);
+              error: {
+                iconTheme: {
+                  primary: "var(--c-error, #f44336)",
+                  secondary: "var(--c-white, #ffffff)",
+                },
+              },
+            }}
+          />
+        </AuthProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  );
+} catch (error) {
+  console.error("Error al inicializar la aplicación:", error);
+
+  // Mostrar mensaje de error básico
+  const rootElement = document.getElementById("root");
+  if (rootElement) {
+    rootElement.innerHTML = `
+      <div style="
+        padding: 40px;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #f5f5f5;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      ">
+        <div style="
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          max-width: 400px;
+        ">
+          <h1 style="color: #d32f2f; margin-bottom: 20px;">⚠️ Error de Carga</h1>
+          <p style="margin-bottom: 15px;">La aplicación no pudo inicializarse correctamente.</p>
+          <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Error: ${error.message}</p>
+          <button onclick="window.location.reload()" style="
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+          ">
+            Recargar Página
+          </button>
+        </div>
+      </div>
+    `;
+  }
+}
 
 /*
  * FLUJO DE LA APLICACIÓN:

@@ -24,6 +24,8 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+  const [sessionId] = useState(() => Date.now().toString());
 
   // Get user data from Firestore
   const getUserData = async (uid, email = null) => {
@@ -153,24 +155,109 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Sistema de cierre automático de sesión al cerrar navegador
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Marcar que la ventana se está cerrando
+      sessionStorage.setItem("windowClosing", "true");
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // La pestaña se oculta, puede ser que se esté cerrando
+        sessionStorage.setItem("tabHidden", Date.now().toString());
+      } else if (document.visibilityState === "visible") {
+        // La pestaña vuelve a estar visible
+        const hiddenTime = sessionStorage.getItem("tabHidden");
+        if (hiddenTime) {
+          const timeHidden = Date.now() - parseInt(hiddenTime);
+          // Si estuvo oculta más de 30 segundos, cerrar sesión
+          if (timeHidden > 30000 && currentUser) {
+            logout();
+            toast.error("Sesión cerrada por inactividad");
+          }
+        }
+        sessionStorage.removeItem("tabHidden");
+      }
+    };
+
+    // Verificar si es una nueva sesión del navegador
+    const checkBrowserSession = () => {
+      const lastSessionId = sessionStorage.getItem("currentSessionId");
+      if (!lastSessionId || lastSessionId !== sessionId) {
+        // Nueva sesión del navegador - cerrar sesión anterior
+        if (currentUser) {
+          logout();
+        }
+        sessionStorage.setItem("currentSessionId", sessionId);
+      }
+    };
+
+    // Ejecutar verificación al cargar
+    checkBrowserSession();
+
+    // Event listeners
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [currentUser, sessionId]);
+
   // Listen to auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
+    let unsubscribe;
 
-      if (user) {
-        const data = await getUserData(user.uid, user.email);
-        setUserData(data);
-      } else {
-        setUserData(null);
-        localStorage.removeItem("currentUser");
-      }
+    try {
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        try {
+          setCurrentUser(user);
 
+          if (user) {
+            const data = await getUserData(user.uid, user.email);
+            setUserData(data);
+
+            // Registrar sesión activa para múltiples usuarios
+            const userSession = {
+              uid: user.uid,
+              email: user.email,
+              sessionId,
+              timestamp: Date.now(),
+              userAgent: navigator.userAgent,
+            };
+            localStorage.setItem(
+              "activeUserSession",
+              JSON.stringify(userSession)
+            );
+          } else {
+            setUserData(null);
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("activeUserSession");
+          }
+
+          setAuthError(null);
+        } catch (error) {
+          console.error("Error en onAuthStateChanged:", error);
+          setAuthError(error.message);
+          toast.error("Error de autenticación: " + error.message);
+        }
+
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error("Error al inicializar Firebase Auth:", error);
+      setAuthError(error.message);
       setLoading(false);
-    });
+    }
 
-    return unsubscribe;
-  }, []);
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [sessionId]);
 
   const value = {
     currentUser,
@@ -183,6 +270,63 @@ export const AuthProvider = ({ children }) => {
     isUser: userData?.role === ROLES.USER,
     isGuest: userData?.role === ROLES.GUEST,
   };
+
+  // Si hay error de autenticación, mostrar mensaje
+  if (authError) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          padding: "20px",
+          backgroundColor: "#f5f5f5",
+        }}
+      >
+        <div
+          style={{
+            background: "white",
+            padding: "30px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            textAlign: "center",
+            maxWidth: "400px",
+          }}
+        >
+          <h2 style={{ color: "#d32f2f", marginBottom: "20px" }}>
+            ❌ Error de Firebase
+          </h2>
+          <p style={{ marginBottom: "15px" }}>Error de autenticación:</p>
+          <code
+            style={{
+              display: "block",
+              background: "#f5f5f5",
+              padding: "10px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              marginBottom: "20px",
+            }}
+          >
+            {authError}
+          </code>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              background: "#1976d2",
+              color: "white",
+              border: "none",
+              padding: "12px 24px",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Recargar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>

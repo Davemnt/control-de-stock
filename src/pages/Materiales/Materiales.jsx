@@ -38,6 +38,7 @@ import Input from "../../components/Input/Input";
 import Badge from "../../components/Badge/Badge";
 import Modal from "../../components/Modal/Modal";
 import BarcodeScanner from "../../components/BarcodeScanner/BarcodeScanner";
+import ImageUploadWidget from "../../components/ImageUploadWidget/ImageUploadWidget";
 import { exportMaterialsToPDF } from "../../utils/pdfExport";
 import toast from "react-hot-toast";
 import "./Materiales.css";
@@ -63,9 +64,11 @@ const Materiales = () => {
     quantity: 0,
     quantityCommitted: 0,
     quantityMaintenance: 0,
-    location: "Depósito Principal",
+    location: "Deposito Principal",
     status: "operativo",
     notes: "",
+    imageUrl: "",
+    imagePath: "",
   });
 
   useEffect(() => {
@@ -255,9 +258,11 @@ const Materiales = () => {
       quantity: material.quantity || 0,
       quantityCommitted: material.quantityCommitted || 0,
       quantityMaintenance: material.quantityMaintenance || 0,
-      location: material.location || "Depósito Principal",
+      location: material.location || "Deposito Principal",
       status: material.status || "operativo",
       notes: material.notes || "",
+      imageUrl: material.imageUrl || "",
+      imagePath: material.imagePath || "",
     });
     setShowModal(true);
   };
@@ -290,6 +295,8 @@ const Materiales = () => {
       location: "Depósito Principal",
       status: "operativo",
       notes: "",
+      imageUrl: "",
+      imagePath: "",
     });
     setEditingMaterial(null);
   };
@@ -669,6 +676,40 @@ const Materiales = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Sección: Imagen */}
+            <div className="form-section">
+              <h3 className="form-section-title">Imagen del Material</h3>
+              <ImageUploadWidget
+                materialId={editingMaterial?.id || 'new'}
+                currentImageUrl={formData.imageUrl}
+                onImageUpload={(url, path) => {
+                  setFormData({ 
+                    ...formData, 
+                    imageUrl: url,
+                    imagePath: path 
+                  });
+                }}
+                onImageRemove={() => {
+                  setFormData({ 
+                    ...formData, 
+                    imageUrl: "",
+                    imagePath: "" 
+                  });
+                }}
+                disabled={isGuest}
+              />
+              {isGuest && (
+                <p style={{ 
+                  fontSize: '0.875rem', 
+                  color: 'var(--c-warning)', 
+                  marginTop: 'var(--spacing-sm)',
+                  textAlign: 'center'
+                }}>
+                  📷 Subida de imágenes no disponible en modo demostración
+                </p>
+              )}
             </div>
 
             {/* Sección: Observaciones */}

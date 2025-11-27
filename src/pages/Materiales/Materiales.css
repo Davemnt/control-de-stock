@@ -72,6 +72,30 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* Imagen del material */
+.material-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: var(--surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.material-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.material-card:hover .material-image img {
+  transform: scale(1.05);
 }
 
 .material-header {
