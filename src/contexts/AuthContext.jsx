@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { ROLES, COLLECTIONS, getCollection } from "../constants";
+import { ROLES, COLLECTIONS } from "../constants";
 import toast from "react-hot-toast";
 
 const AuthContext = createContext();
@@ -30,20 +30,15 @@ export const AuthProvider = ({ children }) => {
   // Get user data from Firestore
   const getUserData = async (uid, email = null) => {
     try {
-      // Para usuario demo, usar colección separada
-      const isDemo = email === "demo@demo.com";
-      const collectionName = isDemo ? "demo_users" : COLLECTIONS.USERS;
-
-      const userDoc = await getDoc(doc(db, collectionName, uid));
+      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        // Guardar info del usuario en localStorage para separar colecciones
+        // Guardar info del usuario en localStorage
         localStorage.setItem(
           "currentUser",
           JSON.stringify({
             uid,
             email: userData.email,
-            isDemo,
           })
         );
         return userData;
@@ -65,20 +60,14 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Usuario no encontrado en la base de datos");
       }
 
-      if (!data.active) {
+      if (data.active === false) {
         await signOut(auth);
         throw new Error("Usuario desactivado");
       }
 
       setUserData(data);
 
-      // Mostrar mensaje diferente para demo
-      const isDemoUser = email === "demo@demo.com";
-      const welcomeMessage = isDemoUser
-        ? `Bienvenido al DEMO, ${data.name}`
-        : `Bienvenido, ${data.name}`;
-
-      toast.success(welcomeMessage);
+      toast.success(`Bienvenido, ${data.name}`);
       return result;
     } catch (error) {
       let message = "Error al iniciar sesión";
@@ -125,10 +114,7 @@ export const AuthProvider = ({ children }) => {
       );
 
       // Create user document in Firestore
-      const isDemo = email === "demo@demo.com";
-      const collectionName = isDemo ? "demo_users" : COLLECTIONS.USERS;
-
-      await setDoc(doc(db, collectionName, result.user.uid), {
+      await setDoc(doc(db, COLLECTIONS.USERS, result.user.uid), {
         ...userData,
         uid: result.user.uid,
         email: email.toLowerCase(),
@@ -267,6 +253,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     register,
     isAdmin: userData?.role === ROLES.ADMIN,
+    isEmployee: userData?.role === ROLES.EMPLOYEE,
     isUser: userData?.role === ROLES.USER,
     isGuest: userData?.role === ROLES.GUEST,
   };

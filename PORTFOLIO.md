@@ -13,19 +13,27 @@
 
 ## 🌐 Acceso al Proyecto
 
-**🔗 URL en Vivo:** https://control-de-stock-e4f5f.web.app
+**🏭 Versión PRODUCCIÓN (Cliente Real):**  
+**URL:** https://control-de-stock-e4f5f.web.app  
+**Base de Datos:** Datos reales del cliente (privada)
 
-### Credenciales de Prueba
+**🎭 Versión DEMO (Demostración Pública):**  
+**URL:** https://control-stock-demo.web.app  
+**Base de Datos:** Datos ficticios completamente separados
 
-**Administrador:**
+### Credenciales de Acceso
+
+**Versión Producción (Privada):**
 
 - Email: `montedavid07@hotmail.com`
 - Password: `Moroni1032!`
+- ⚠️ Acceso restringido - Solo cliente
 
-**Modo Demostración:**
+**Versión Demo (Pública):**
 
 - Email: `demo@demo.com`
 - Password: `demo123`
+- ✅ Acceso libre para pruebas
 
 ---
 
@@ -58,13 +66,14 @@ Aplicación web moderna con interfaz intuitiva que permite:
 ### 🔐 1. Sistema de Autenticación y Seguridad
 
 - ✅ Inicio de sesión seguro con Firebase Authentication
-- ✅ Gestión de usuarios con 3 roles (Admin, Usuario, Invitado)
+- ✅ Gestión de usuarios con 4 roles (Admin, Empleado, Usuario, Invitado)
 - ✅ **Cierre automático al cerrar navegador**
 - ✅ **Cierre por inactividad (30 segundos)**
 - ✅ **Múltiples usuarios simultáneos**
 - ✅ Cambio de contraseña individual
 - ✅ Protección contra inspección de código
 - ✅ Registro de actividad por usuario
+- ✅ **Sistema de roles jerárquico con permisos granulares**
 
 ### 📊 2. Gestión Completa de Materiales
 
@@ -104,18 +113,22 @@ Aplicación web moderna con interfaz intuitiva que permite:
 
 - ✅ Panel de gestión (solo admin)
 - ✅ Crear usuarios con email y contraseña
-- ✅ Asignar roles (admin/usuario)
+- ✅ Asignar roles (admin/empleado/usuario/invitado)
 - ✅ Ver listado completo
+- ✅ Activar/Desactivar usuarios
 - ✅ Eliminar usuarios
 - ✅ **Soporte para múltiples empleados simultáneos**
+- ✅ **Sistema de permisos granulares por rol**
 
 ### 🎯 7. Modo Demostración
 
-- ✅ Base de datos separada (demo_users, demo_materials)
-- ✅ 10+ materiales de ejemplo pre-cargados
-- ✅ Banner visual indicando modo demo
-- ✅ Acceso de invitado con permisos limitados
+- ✅ **Proyecto Firebase completamente separado**
+- ✅ **Base de datos independiente (sin conexión con producción)**
+- ✅ 12 materiales de ejemplo pre-cargados
+- ✅ URL dedicada para demos: https://control-stock-demo.web.app
+- ✅ Datos ficticios editables sin riesgo
 - ✅ Ideal para capacitaciones y presentaciones
+- ✅ Acceso público con credenciales demo
 
 ### 📱 8. Diseño Responsive
 
@@ -219,15 +232,21 @@ control-de-stock/
 
 ### Base de Datos (Firestore)
 
-**Colecciones Principales:**
+**🏭 Proyecto Producción (control-de-stock-e4f5f):**
 
-- `users` - Usuarios del sistema admin
-- `demo_users` - Usuarios del modo demo
-- `materials` - Catálogo de materiales admin
-- `demo_materials` - Materiales de demostración
-- `movements` - Historial de movimientos
-- `demo_movements` - Movimientos demo
-- `system` - Configuración del sistema
+- `users` - Usuarios del cliente
+- `materials` - Catálogo de materiales reales
+- `movements` - Historial de movimientos reales
+- `logs` - Logs de actividad
+
+**🎭 Proyecto Demo (control-stock-demo):**
+
+- `users` - Usuarios demo (demo@demo.com)
+- `materials` - Materiales ficticios
+- `movements` - Movimientos de ejemplo
+- `logs` - Logs de prueba
+
+⚠️ **IMPORTANTE:** Ambos proyectos están completamente separados. No comparten información alguna.
 
 **Estructura de Material:**
 
@@ -249,8 +268,6 @@ control-de-stock/
   updatedAt: timestamp,
   createdBy: string
 }
-```
-
 ### Sistema de Roles
 
 **Admin:**
@@ -261,6 +278,18 @@ control-de-stock/
 - ✅ Administrar usuarios
 - ✅ Exportar PDFs
 - ✅ Subir imágenes
+- ✅ Acceso total al sistema
+
+**Empleado:**
+
+- ✅ Crear nuevos materiales
+- ✅ Registrar movimientos
+- ✅ Ver historial completo
+- ✅ Exportar PDFs
+- ✅ Subir imágenes
+- ❌ No puede editar materiales existentes
+- ❌ No puede eliminar materiales
+- ❌ No administra usuarios
 
 **Usuario:**
 
@@ -268,14 +297,18 @@ control-de-stock/
 - ✅ Registrar movimientos
 - ✅ Ver historial
 - ✅ Exportar PDFs
+- ❌ No puede crear materiales
 - ❌ No puede eliminar
 - ❌ No administra usuarios
 
-**Invitado (Demo):**
+**Invitado:**
 
-- ✅ Ver materiales demo
-- ✅ Ver movimientos demo
+- ✅ Ver materiales
+- ✅ Ver movimientos
+- ✅ Ver historial
 - ✅ Exportar PDFs
+- ❌ No puede modificar nada
+- ❌ Solo lecturas
 - ❌ No puede modificar nada
 - ❌ Solo lectura
 
@@ -355,32 +388,32 @@ control-de-stock/
 
 ### Escenario 1: Control de Inventario Diario
 
-**Usuario:** Encargado de depósito  
-**Acción:** Registra salida de 4 reflectores LED para evento  
+**Usuario:** Encargado de depósito
+**Acción:** Registra salida de 4 reflectores LED para evento
 **Resultado:** Stock actualizado automáticamente, historial registrado con usuario y timestamp
 
 ### Escenario 2: Escaneo Rápido
 
-**Usuario:** Técnico de campo  
-**Acción:** Escanea código de barras con celular  
+**Usuario:** Técnico de campo
+**Acción:** Escanea código de barras con celular
 **Resultado:** Información completa del material, puede registrar movimiento inmediatamente
 
 ### Escenario 3: Reporte para Cliente
 
-**Usuario:** Gerente  
-**Acción:** Exporta catálogo filtrado por categoría "Audio"  
+**Usuario:** Gerente
+**Acción:** Exporta catálogo filtrado por categoría "Audio"
 **Resultado:** PDF profesional descargado para enviar al cliente
 
 ### Escenario 4: Capacitación de Nuevos Empleados
 
-**Usuario:** Recursos Humanos  
-**Acción:** Usa modo demo para entrenar nuevo personal  
+**Usuario:** Recursos Humanos
+**Acción:** Usa modo demo para entrenar nuevo personal
 **Resultado:** Empleados practican sin riesgo de alterar datos reales
 
 ### Escenario 5: Trabajo Simultáneo
 
-**Usuario:** 3 empleados en diferentes ubicaciones  
-**Acción:** Cada uno gestiona su área del depósito  
+**Usuario:** 3 empleados en diferentes ubicaciones
+**Acción:** Cada uno gestiona su área del depósito
 **Resultado:** **Todos trabajan sin conflictos, datos sincronizados en tiempo real**
 
 ---
@@ -540,14 +573,14 @@ control-de-stock/
 
 ### Desarrollador
 
-**Nombre:** David Montenegro  
-**Email:** montedavid07@hotmail.com  
-**GitHub:** [@Davemnt](https://github.com/Davemnt)  
+**Nombre:** David Montenegro
+**Email:** montedavid07@hotmail.com
+**GitHub:** [@Davemnt](https://github.com/Davemnt)
 **LinkedIn:** [Tu perfil de LinkedIn]
 
 ### Repositorio
 
-**GitHub:** https://github.com/Davemnt/control-de-stock  
+**GitHub:** https://github.com/Davemnt/control-de-stock
 **Licencia:** Propietaria (Código fuente privado)
 
 ### Tecnologías Destacadas
@@ -594,8 +627,9 @@ El sistema está completamente operativo y listo para uso en producción, con po
 
 ---
 
-**Última Actualización:** Diciembre 2025  
-**Versión:** 2.0  
+**Última Actualización:** Diciembre 2025
+**Versión:** 2.0
 **Estado:** ✅ Producción
 
 ---
+```

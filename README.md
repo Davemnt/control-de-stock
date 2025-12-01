@@ -9,9 +9,28 @@
 
 **Sistema profesional de gestión de inventario para productoras técnicas de eventos**
 
-[🌐 Demo en Vivo](https://control-de-stock-e4f5f.web.app) • [📋 Portfolio](./PORTFOLIO.md) • [💼 Presupuesto](./PRESUPUESTO_CLIENTE.md)
+[🏭 Producción](https://control-de-stock-e4f5f.web.app) • [🎭 Demo](https://control-stock-demo.web.app) • [📋 Portfolio](./PORTFOLIO.md) • [💼 Presupuesto](./PRESUPUESTO_CLIENTE.md)
 
 </div>
+
+---
+
+## 🌐 Versiones Disponibles
+
+### 🏭 **Versión PRODUCCIÓN**
+
+**URL:** https://control-de-stock-e4f5f.web.app  
+**Base de Datos:** Datos reales del cliente (privada y segura)  
+**Acceso:** Restringido - Solo personal autorizado
+
+### 🎭 **Versión DEMO**
+
+**URL:** https://control-stock-demo.web.app  
+**Base de Datos:** Completamente separada con datos ficticios  
+**Acceso:** Público - Pruebas y demostraciones  
+**Credenciales:** demo@demo.com / demo123
+
+> ⚠️ **IMPORTANTE:** Ambas versiones están en proyectos Firebase completamente separados. No comparten información alguna.
 
 ---
 

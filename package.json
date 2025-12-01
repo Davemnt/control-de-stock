@@ -5,19 +5,15 @@
   "type": "module",
   "description": "Sistema profesional de Control de Stock para productora técnica de eventos",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode production",
+    "dev:demo": "vite --mode demo",
+    "build": "vite build --mode production",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
+    "preview:demo": "vite preview --mode demo",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "switch:demo": "node switch-client.js demo",
-    "switch:cliente1": "node switch-client.js cliente1",
-    "switch:cliente2": "node switch-client.js cliente2",
-    "switch:production": "node switch-client.js production",
-    "dev:demo": "npm run switch:demo && vite",
-    "dev:cliente1": "npm run switch:cliente1 && vite",
-    "build:demo": "npm run switch:demo && vite build",
-    "build:cliente1": "npm run switch:cliente1 && vite build",
-    "build:production": "npm run switch:production && vite build"
+    "deploy": "npm run build && firebase use dave && firebase deploy --only hosting",
+    "deploy:demo": "npm run build:demo && firebase use demo && firebase deploy --only hosting"
   },
   "dependencies": {
     "date-fns": "^3.3.1",

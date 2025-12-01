@@ -31,7 +31,7 @@ import toast from "react-hot-toast";
 import "./Movimientos.css";
 
 const Movimientos = () => {
-  const { userData, isAdmin, isUser, currentUser } = useAuth();
+  const { userData, isAdmin, isUser, isEmployee, currentUser } = useAuth();
   const [movements, setMovements] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [filteredMovements, setFilteredMovements] = useState([]);
@@ -226,7 +226,7 @@ const Movimientos = () => {
             <h1>Movimientos de Stock</h1>
             <p>{filteredMovements.length} movimientos registrados</p>
           </div>
-          {(isAdmin || isUser) && (
+          {(isAdmin || isUser || isEmployee) && (
             <Button
               variant="primary"
               icon={Plus}

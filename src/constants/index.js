@@ -1,6 +1,7 @@
 // User roles
 export const ROLES = {
   ADMIN: "admin",
+  EMPLOYEE: "employee", // Nuevo rol: puede crear y registrar, pero no editar
   USER: "user",
   GUEST: "guest",
 };
@@ -82,6 +83,14 @@ export const PERMISSIONS = {
     "export_reports",
     "manual_adjust",
   ],
+  [ROLES.EMPLOYEE]: [
+    "view_all",
+    "create_material", // ✅ Puede crear materiales
+    "create_movement", // ✅ Puede registrar movimientos
+    "view_history",
+    "export_reports",
+    // ❌ NO puede editar ni eliminar materiales
+  ],
   [ROLES.USER]: [
     "view_all",
     "create_movement",
@@ -119,17 +128,6 @@ export const COLLECTIONS = {
   MATERIALS: "materials",
   MOVEMENTS: "movements",
   LOGS: "logs",
-};
-
-// Helper para obtener nombre de coleccion segun el usuario
-export const getCollection = (collectionName) => {
-  const isDemoMode = () => {
-    const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    return userData.email === "demo@demo.com";
-  };
-
-  const prefix = isDemoMode() ? "demo_" : "";
-  return `${prefix}${collectionName}`;
 };
 
 // Languages

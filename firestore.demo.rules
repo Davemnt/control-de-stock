@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función para verificar autenticación
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Función para verificar si el usuario es admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Función para verificar si el usuario es el dueño del documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Colección de usuarios
+    match /users/{userId} {
+      // Solo admins pueden listar todos los usuarios
+      allow list: if isAdmin();
+      
+      // Los usuarios pueden leer su propio documento
+      allow get: if isOwner(userId) || isAdmin();
+      
+      // Solo admins pueden crear usuarios
+      allow create: if isAdmin();
+      
+      // Los usuarios pueden actualizar su propio documento, admins pueden actualizar cualquiera
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // Solo admins pueden eliminar usuarios
+      allow delete: if isAdmin();
+    }
+    
+    // Colección de materiales
+    match /materials/{materialId} {
+      // Todos los usuarios autenticados pueden leer materiales
+      allow read: if isAuthenticated();
+      
+      // Solo admins pueden crear, actualizar y eliminar materiales
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Colección de movimientos
+    match /movements/{movementId} {
+      // Todos los usuarios autenticados pueden leer movimientos
+      allow read: if isAuthenticated();
+      
+      // Usuarios autenticados pueden crear movimientos
+      allow create: if isAuthenticated();
+      
+      // Solo admins pueden actualizar y eliminar movimientos
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Colección de logs (si existe)
+    match /logs/{logId} {
+      // Solo admins pueden leer logs
+      allow read: if isAdmin();
+      
+      // Cualquier usuario autenticado puede crear logs
+      allow create: if isAuthenticated();
+      
+      // Nadie puede actualizar o eliminar logs
+      allow update, delete: if false;
+    }
+    
+    // Bloquear acceso a cualquier otra colección
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

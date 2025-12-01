@@ -12,16 +12,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Determinar si es usuario demo para separar datos
-export const isDemoMode = () => {
-  const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
-  return userData.email === "demo@demo.com";
-};
-
-// Prefijo para colecciones según el tipo de usuario
-export const getCollectionPrefix = () => {
-  return isDemoMode() ? "demo_" : "";
-};
+// Log del proyecto actual para debugging
+console.log("🔥 Firebase Project:", firebaseConfig.projectId);
+console.log("🔥 Environment Mode:", import.meta.env.MODE);
 
 // Validate Firebase configuration
 const validateConfig = () => {

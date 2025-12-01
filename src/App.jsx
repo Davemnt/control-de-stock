@@ -26,13 +26,11 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Permite saber: ¿Hay un usuario logueado? ¿Qué rol tiene?
 import { useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { isDemoMode } from "./config/clientConfig";
 
 // ========== IMPORT DE COMPONENTE DE PROTECCIÓN ==========
 // ProtectedRoute: Componente que protege rutas privadas
 // Si el usuario NO está logueado, lo redirige al login
 import ProtectedRoute from "./components/ProtectedRoute";
-import DemoBanner from "./components/DemoBanner/DemoBanner";
 
 // ========== IMPORTS DE PÁGINAS ==========
 // Cada una de estas es una página completa de la aplicación
@@ -63,10 +61,7 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className={`app-wrapper ${isDemoMode() ? "has-demo-banner" : ""}`}>
-        {/* Banner de modo demo - Solo visible en modo demostración */}
-        <DemoBanner />
-
+      <div className="app-wrapper">
         {/*
          * <Routes>: Contenedor principal de todas las rutas
          * - React Router renderiza SOLO la ruta que coincida con la URL actual

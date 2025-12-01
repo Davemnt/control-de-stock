@@ -17,7 +17,7 @@ import "./Sidebar.css";
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, userData, isAdmin } = useAuth();
+  const { logout, userData, isAdmin, isEmployee } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -33,25 +33,25 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/",
       icon: LayoutDashboard,
       label: "Dashboard",
-      roles: ["admin", "user", "guest"],
+      roles: ["admin", "employee", "user", "guest"],
     },
     {
       path: "/materiales",
       icon: Package,
-      label: "Materiales",
-      roles: ["admin", "user", "guest"],
+      label: "Inventario",
+      roles: ["admin", "employee", "user", "guest"],
     },
     {
       path: "/movimientos",
       icon: ArrowLeftRight,
       label: "Movimientos",
-      roles: ["admin", "user"],
+      roles: ["admin", "employee", "user"],
     },
     {
       path: "/historial",
       icon: History,
       label: "Historial",
-      roles: ["admin", "user", "guest"],
+      roles: ["admin", "employee", "user", "guest"],
     },
     {
       path: "/usuarios",
@@ -63,7 +63,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       path: "/configuracion",
       icon: Settings,
       label: "Configuración",
-      roles: ["admin", "user", "guest"],
+      roles: ["admin", "employee", "user", "guest"],
     },
   ];
 
@@ -98,6 +98,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             <p className="sidebar-user-role">
               {userData?.role === "admin"
                 ? "Administrador"
+                : userData?.role === "employee"
+                ? "Empleado"
                 : userData?.role === "user"
                 ? "Usuario"
                 : "Invitado"}

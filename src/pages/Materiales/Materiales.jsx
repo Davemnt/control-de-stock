@@ -26,7 +26,6 @@ import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   COLLECTIONS,
-  getCollection,
   CATEGORIES,
   CATEGORY_LABELS,
   STATUS_LABELS,
@@ -44,7 +43,7 @@ import toast from "react-hot-toast";
 import "./Materiales.css";
 
 const Materiales = () => {
-  const { userData, isAdmin, isUser, isGuest } = useAuth();
+  const { userData, isAdmin, isEmployee, isUser, isGuest } = useAuth();
   const [materials, setMaterials] = useState([]);
   const [filteredMaterials, setFilteredMaterials] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -127,9 +126,8 @@ const Materiales = () => {
 
   const loadMaterials = async () => {
     try {
-      const materialsCollectionName = getCollection(COLLECTIONS.MATERIALS);
       const materialsSnapshot = await getDocs(
-        collection(db, materialsCollectionName)
+        collection(db, COLLECTIONS.MATERIALS)
       );
       const materialsData = materialsSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -189,8 +187,7 @@ const Materiales = () => {
     try {
       if (editingMaterial) {
         // Update - preservar createdAt y createdBy
-        const materialsCollectionName = getCollection(COLLECTIONS.MATERIALS);
-        await updateDoc(doc(db, materialsCollectionName, editingMaterial.id), {
+        await updateDoc(doc(db, COLLECTIONS.MATERIALS, editingMaterial.id), {
           name: formData.name.trim(),
           code: formData.code.trim(),
           category: formData.category,
@@ -206,7 +203,6 @@ const Materiales = () => {
         toast.success("Material actualizado");
       } else {
         // Create - incluir TODOS los campos obligatorios según las reglas de Firestore
-        const materialsCollectionName = getCollection(COLLECTIONS.MATERIALS);
         const materialData = {
           name: String(formData.name || "").trim(),
           code: String(formData.code || "").trim(),
@@ -225,7 +221,7 @@ const Materiales = () => {
         };
 
         console.log("Creating material with data:", materialData);
-        await addDoc(collection(db, materialsCollectionName), materialData);
+        await addDoc(collection(db, COLLECTIONS.MATERIALS), materialData);
         toast.success("Material creado exitosamente");
       }
 
@@ -273,8 +269,7 @@ const Materiales = () => {
     }
 
     try {
-      const materialsCollectionName = getCollection(COLLECTIONS.MATERIALS);
-      await deleteDoc(doc(db, materialsCollectionName, id));
+      await deleteDoc(doc(db, COLLECTIONS.MATERIALS, id));
       toast.success("Material eliminado");
       loadMaterials();
     } catch (error) {
@@ -351,9 +346,11 @@ const Materiales = () => {
             <Button variant="ghost" icon={FileDown} onClick={handleExportPDF}>
               Exportar PDF
             </Button>
-            <Button variant="primary" icon={Plus} onClick={handleNewMaterial}>
-              Nuevo Material
-            </Button>
+            {(isAdmin || isEmployee) && (
+              <Button variant="primary" icon={Plus} onClick={handleNewMaterial}>
+                Nuevo Material
+              </Button>
+            )}
           </div>
         </div>
 
@@ -452,43 +449,56 @@ const Materiales = () => {
                 </div>
 
                 <div className="material-actions">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Edit}
-                    onClick={() => {
-                      if (isGuest) {
-                        toast.info("👁️ Versión Demo: Edición no disponible");
-                      } else {
-                        handleEdit(material);
-                      }
-                    }}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Trash2}
-                    onClick={() => {
-                      if (isGuest || !isAdmin) {
+                  {/* Solo admin puede editar */}
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={Edit}
+                      onClick={() => handleEdit(material)}
+                    >
+                      Editar
+                    </Button>
+                  )}
+
+                  {/* Employee no puede editar */}
+                  {isEmployee && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={Edit}
+                      onClick={() =>
                         toast.info(
-                          "🗑️ Versión Demo: Solo los administradores pueden eliminar materiales"
-                        );
-                      } else {
-                        handleDelete(material.id);
+                          "⚠️ Solo los administradores pueden editar materiales"
+                        )
                       }
-                    }}
-                  >
-                    Eliminar
-                  </Button>
-                  {isGuest && (
+                    >
+                      Editar
+                    </Button>
+                  )}
+
+                  {/* Solo admin puede eliminar */}
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={Trash2}
+                      onClick={() => handleDelete(material.id)}
+                    >
+                      Eliminar
+                    </Button>
+                  )}
+
+                  {/* Employee y User no pueden eliminar */}
+                  {(isEmployee || isUser) && (
                     <Button
                       variant="ghost"
                       size="sm"
                       icon={Trash2}
                       onClick={() =>
-                        toast.info("👁️ Versión Demo: Eliminación no disponible")
+                        toast.info(
+                          "⚠️ Solo los administradores pueden eliminar materiales"
+                        )
                       }
                     >
                       Eliminar
@@ -682,31 +692,33 @@ const Materiales = () => {
             <div className="form-section">
               <h3 className="form-section-title">Imagen del Material</h3>
               <ImageUploadWidget
-                materialId={editingMaterial?.id || 'new'}
+                materialId={editingMaterial?.id || "new"}
                 currentImageUrl={formData.imageUrl}
                 onImageUpload={(url, path) => {
-                  setFormData({ 
-                    ...formData, 
+                  setFormData({
+                    ...formData,
                     imageUrl: url,
-                    imagePath: path 
+                    imagePath: path,
                   });
                 }}
                 onImageRemove={() => {
-                  setFormData({ 
-                    ...formData, 
+                  setFormData({
+                    ...formData,
                     imageUrl: "",
-                    imagePath: "" 
+                    imagePath: "",
                   });
                 }}
                 disabled={isGuest}
               />
               {isGuest && (
-                <p style={{ 
-                  fontSize: '0.875rem', 
-                  color: 'var(--c-warning)', 
-                  marginTop: 'var(--spacing-sm)',
-                  textAlign: 'center'
-                }}>
+                <p
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "var(--c-warning)",
+                    marginTop: "var(--spacing-sm)",
+                    textAlign: "center",
+                  }}
+                >
                   📷 Subida de imágenes no disponible en modo demostración
                 </p>
               )}
