@@ -218,11 +218,12 @@
 
 /* Botones más compactos */
 .login-form .btn {
-  padding: 12px var(--spacing-lg);
+  padding: 10px var(--spacing-lg);
   font-size: 0.9375rem;
   font-weight: 600;
   height: auto;
-  min-height: 44px;
+  min-height: 42px;
+  max-height: 42px;
 }
 
 /* Contenedor de botones demo */

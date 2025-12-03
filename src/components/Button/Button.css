@@ -27,9 +27,9 @@
 }
 
 .btn-md {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-size: 1rem;
-  min-height: 40px;
+  padding: 10px var(--spacing-lg);
+  font-size: 0.9375rem;
+  min-height: 42px;
 }
 
 .btn-lg {
