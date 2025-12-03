@@ -1,0 +1,33 @@
+{
+  "name": "control-stock-installer",
+  "version": "1.0.0",
+  "description": "Instalador automático de Control de Stock para nuevos clientes",
+  "main": "install.mjs",
+  "type": "module",
+  "scripts": {
+    "install-client": "node install.mjs",
+    "install-autonomo": "node install-client-autonomo.mjs",
+    "admin": "node admin-panel.mjs",
+    "guia": "node guia-rapida.mjs",
+    "test": "node test.mjs"
+  },
+  "keywords": [
+    "installer",
+    "control-stock",
+    "firebase",
+    "automation"
+  ],
+  "author": "David Monte",
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "inquirer": "^9.2.12",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "dotenv": "^16.3.1",
+    "firebase": "^10.7.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-tools": "^13.0.2",
+    "slugify": "^1.6.6",
+    "nodemailer": "^6.9.7"
+  }
+}

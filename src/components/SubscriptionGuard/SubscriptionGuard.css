@@ -1,0 +1,246 @@
+.subscription-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--c-background);
+  color: var(--c-text);
+}
+
+.subscription-loading .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--c-border);
+  border-top-color: var(--c-brand);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--spacing-lg);
+}
+
+.subscription-blocked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--spacing-lg);
+  background: radial-gradient(
+      circle at 20% 50%,
+      rgba(239, 68, 68, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(239, 68, 68, 0.05) 0%,
+      transparent 50%
+    );
+}
+
+.subscription-blocked-card {
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+}
+
+.subscription-blocked-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto var(--spacing-xl);
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.2),
+    rgba(220, 38, 38, 0.1)
+  );
+  border-radius: 50%;
+  color: #ef4444;
+}
+
+.subscription-blocked-card h1 {
+  font-family: var(--font-bold);
+  font-size: 2rem;
+  color: var(--c-text-cream);
+  margin-bottom: var(--spacing-md);
+}
+
+.subscription-blocked-message {
+  font-size: 1.125rem;
+  color: var(--c-text);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+}
+
+.subscription-contact-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  background: rgba(222, 89, 31, 0.1);
+  border: 1px solid var(--c-brand);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  text-align: left;
+}
+
+.subscription-contact-info svg {
+  flex-shrink: 0;
+  color: var(--c-brand);
+  margin-top: 4px;
+}
+
+.subscription-contact-info strong {
+  display: block;
+  font-family: var(--font-bold);
+  color: var(--c-text-cream);
+  margin-bottom: var(--spacing-xs);
+}
+
+.subscription-contact-info p {
+  margin: var(--spacing-xs) 0;
+  font-size: 0.875rem;
+  color: var(--c-text);
+}
+
+.subscription-plans {
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--c-border);
+}
+
+.subscription-plans h3 {
+  font-family: var(--font-bold);
+  font-size: 1.5rem;
+  color: var(--c-text-cream);
+  margin-bottom: var(--spacing-lg);
+}
+
+.subscription-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-lg);
+  text-align: left;
+}
+
+.subscription-plan-card {
+  background: var(--c-surface-light);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  position: relative;
+}
+
+.subscription-plan-card.featured {
+  border-color: var(--c-brand);
+  box-shadow: 0 0 0 2px rgba(222, 89, 31, 0.2);
+}
+
+.plan-badge {
+  position: absolute;
+  top: -12px;
+  right: var(--spacing-md);
+  background: var(--c-brand);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.subscription-plan-card h4 {
+  font-family: var(--font-bold);
+  font-size: 1.25rem;
+  color: var(--c-text-cream);
+  margin-bottom: var(--spacing-sm);
+}
+
+.plan-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--c-brand);
+  margin-bottom: var(--spacing-md);
+}
+
+.subscription-plan-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.subscription-plan-card li {
+  font-size: 0.875rem;
+  color: var(--c-text);
+  padding: var(--spacing-xs) 0;
+  padding-left: 24px;
+  position: relative;
+}
+
+.subscription-plan-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--c-brand);
+  font-weight: 700;
+}
+
+.subscription-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: linear-gradient(
+    135deg,
+    rgba(251, 191, 36, 0.2),
+    rgba(245, 158, 11, 0.1)
+  );
+  border-bottom: 2px solid #f59e0b;
+  padding: var(--spacing-md) var(--spacing-lg);
+  color: var(--c-text-cream);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.subscription-warning-banner svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+.subscription-warning-banner strong {
+  color: #fbbf24;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .subscription-blocked-card {
+    padding: var(--spacing-xl);
+  }
+
+  .subscription-blocked-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .subscription-blocked-icon svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .subscription-blocked-card h1 {
+    font-size: 1.5rem;
+  }
+
+  .subscription-plans-grid {
+    grid-template-columns: 1fr;
+  }
+}

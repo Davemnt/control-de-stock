@@ -111,7 +111,7 @@ const Login = () => {
           <Button
             type="submit"
             variant="primary"
-            size="lg"
+            size="md"
             fullWidth
             loading={loading}
           >
@@ -119,16 +119,17 @@ const Login = () => {
           </Button>
 
           {isDemo && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="lg"
-              fullWidth
-              onClick={fillDemoCredentials}
-              disabled={loading}
-            >
-              Usar Credenciales Demo
-            </Button>
+            <div className="demo-buttons">
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={fillDemoCredentials}
+                disabled={loading}
+              >
+                Usar Credenciales Demo
+              </Button>
+            </div>
           )}
         </form>
 

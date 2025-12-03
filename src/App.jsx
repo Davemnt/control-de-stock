@@ -27,6 +27,11 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
+// ========== IMPORT DE PROTECCIÓN DE SUSCRIPCIÓN ==========
+// SubscriptionGuard: Verifica si la suscripción está activa
+// Bloquea la app si el período de prueba expiró o si no hay pago
+import SubscriptionGuard from "./components/SubscriptionGuard/SubscriptionGuard";
+
 // ========== IMPORT DE COMPONENTE DE PROTECCIÓN ==========
 // ProtectedRoute: Componente que protege rutas privadas
 // Si el usuario NO está logueado, lo redirige al login
@@ -58,16 +63,25 @@ function App() {
    * Este valor se usa para decidir si mostrar Login o Dashboard
    */
   const { currentUser } = useAuth();
+  
+  // ========== OBTENER PROJECT ID ==========
+  // Se usa para verificar la suscripción de este cliente
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  
+  // ========== DETECTAR SI ES DEMO ==========
+  // La versión demo NO tiene restricciones de suscripción
+  const isDemo = projectId === 'control-stock-demo';
 
   return (
     <ThemeProvider>
-      <div className="app-wrapper">
-        {/*
-         * <Routes>: Contenedor principal de todas las rutas
-         * - React Router renderiza SOLO la ruta que coincida con la URL actual
-         * - Si ninguna coincide, renderiza la última ruta con path="*"
-         */}
-        <Routes>
+      {/* 
+        Si NO es demo, envuelve toda la app en SubscriptionGuard
+        Esto verifica la suscripción ANTES de mostrar cualquier contenido
+      */}
+      {isDemo ? (
+        // VERSIÓN DEMO: Sin restricciones
+        <div className="app-wrapper">
+          <Routes>
           {/*
            * ========== RUTA DE LOGIN ==========
            * path="/login" → http://localhost:3000/login
@@ -200,15 +214,6 @@ function App() {
            *
            * PROTEGIDA: Solo usuarios logueados pueden acceder
            */}
-          <Route
-            path="/configuracion"
-            element={
-              <ProtectedRoute>
-                <Configuracion />
-              </ProtectedRoute>
-            }
-          />
-
           {/*
            * ========== RUTA 404 (PÁGINA NO ENCONTRADA) ==========
            * path="*" → Cualquier ruta que no coincida con las anteriores
@@ -218,6 +223,77 @@ function App() {
            * - /abc123
            * - /cualquier-cosa
            *
+           * ACCIÓN: Redirige automáticamente al Dashboard (/)
+           * Esto evita que el usuario vea una página en blanco
+           */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </div>
+      ) : (
+        // VERSIÓN DE PRODUCCIÓN: Con control de suscripción
+        <SubscriptionGuard projectId={projectId}>
+          <div className="app-wrapper">
+            <Routes>
+              <Route
+                path="/login"
+                element={currentUser ? <Navigate to="/" /> : <Login />}
+              />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/materiales"
+                element={
+                  <ProtectedRoute>
+                    <Materiales />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/movimientos"
+                element={
+                  <ProtectedRoute>
+                    <Movimientos />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/historial"
+                element={
+                  <ProtectedRoute>
+                    <Historial />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/usuarios"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <Usuarios />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configuracion"
+                element={
+                  <ProtectedRoute>
+                    <Configuracion />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+        </SubscriptionGuard>
+      )}
+    </ThemeProvider>
+  );
+}          *
            * ACCIÓN: Redirige automáticamente al Dashboard (/)
            * Esto evita que el usuario vea una página en blanco
            */}

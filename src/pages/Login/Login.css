@@ -216,11 +216,24 @@
   padding-right: 48px !important;
 }
 
-/* Botón de login más compacto */
-.login-form .button {
-  padding: var(--spacing-md) var(--spacing-lg);
-  font-size: 1rem;
+/* Botones más compactos */
+.login-form .btn {
+  padding: 12px var(--spacing-lg);
+  font-size: 0.9375rem;
   font-weight: 600;
+  height: auto;
+  min-height: 44px;
+}
+
+/* Contenedor de botones demo */
+.demo-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.demo-buttons .btn {
+  flex: 1;
 }
 
 @media (max-width: 768px) {
