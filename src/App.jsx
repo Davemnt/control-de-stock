@@ -16,6 +16,15 @@ import Configuracion from "./pages/Configuracion/Configuracion";
 function App() {
   const { currentUser } = useAuth();
 
+  // Detectar si es modo demo
+  const isDemo =
+    import.meta.env.VITE_FIREBASE_PROJECT_ID === "control-stock-demo" ||
+    import.meta.env.MODE === "demo";
+
+  console.log("🚀 Modo actual:", isDemo ? "DEMO" : "PRODUCCIÓN");
+  console.log("📋 Project ID:", import.meta.env.VITE_FIREBASE_PROJECT_ID);
+  console.log("🔧 Mode:", import.meta.env.MODE);
+
   return (
     <ThemeProvider>
       <div className="app-wrapper">
