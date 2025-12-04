@@ -216,14 +216,37 @@
   padding-right: 48px !important;
 }
 
-/* Botones más compactos */
+/* Botones NORMALES (por defecto) */
 .login-form .btn {
-  padding: 10px var(--spacing-lg);
-  font-size: 0.9375rem;
+  padding: 8px var(--spacing-lg);
+  font-size: 0.875rem;
   font-weight: 600;
   height: auto;
-  min-height: 42px;
-  max-height: 42px;
+  min-height: 38px;
+  max-height: 38px;
+}
+
+/* Botones GRANDES SOLO para versión DEMO */
+.demo-login .login-form .btn {
+  width: 220px;
+  height: 175px;
+  min-height: 175px;
+  max-height: 175px;
+  padding: var(--spacing-md);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0 auto var(--spacing-md);
+  flex: none;
+}
+
+.demo-login .login-form .btn[type="submit"] {
+  margin-bottom: var(--spacing-lg);
 }
 
 /* Contenedor de botones demo */
@@ -231,16 +254,88 @@
   display: flex;
   gap: var(--spacing-md);
   width: 100%;
+  justify-content: center;
 }
 
+/* Botones demo NORMALES por defecto */
 .demo-buttons .btn {
-  flex: 1;
-  height: 25px;
-  min-height: 25px;
-  max-height: 25px;
-  width: 40%;
-  padding: 0 var(--spacing-sm);
+  flex: 0 0 auto;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  width: auto;
+  padding: 0 var(--spacing-md);
   font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Layout de botones en versión demo - UNO AL LADO DEL OTRO */
+.demo-login .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.demo-login .demo-buttons-container {
+  display: flex;
+  gap: var(--spacing-lg);
+  width: 100%;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Botones demo GRANDES solo en versión demo */
+.demo-login .demo-buttons .btn,
+.demo-login .login-form .btn {
+  height: 120px;
+  min-height: 120px;
+  max-height: 120px;
+  width: 200px;
+  padding: var(--spacing-md);
+  font-size: 1rem;
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+
+/* Estilo especial para el botón de credenciales demo - TEMA OSCURO */
+.demo-buttons .btn-secondary,
+.demo-login .demo-buttons .btn-secondary {
+  background: linear-gradient(135deg, #4c1d95, #5b21b6);
+  border: 2px solid #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 4px 8px rgba(124, 58, 237, 0.3);
+}
+
+.demo-buttons .btn-secondary:hover:not(:disabled),
+.demo-login .demo-buttons .btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5b21b6, #6d28d9);
+  border-color: #8b5cf6;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(124, 58, 237, 0.4);
+}
+
+/* Tema claro - botón demo */
+[data-theme="light"] .demo-buttons .btn-secondary,
+[data-theme="light"] .demo-login .demo-buttons .btn-secondary {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+  border: 2px solid #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="light"] .demo-buttons .btn-secondary:hover:not(:disabled),
+[data-theme="light"]
+  .demo-login
+  .demo-buttons
+  .btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border-color: #60a5fa;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
 }
 
 @media (max-width: 768px) {

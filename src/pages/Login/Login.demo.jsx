@@ -133,7 +133,7 @@ const Login = () => {
             </p>
           </div>
           <p className="login-copyright">
-            © 2025 Control de Stock. Todos los derechos reservados.
+            © 2025 David Monte. Todos los derechos reservados.
           </p>
         </div>
       </div>

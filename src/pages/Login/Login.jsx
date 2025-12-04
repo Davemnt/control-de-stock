@@ -16,7 +16,9 @@ const Login = () => {
 
   // Detectar si estamos en versión demo
   const isDemo =
-    import.meta.env.VITE_FIREBASE_PROJECT_ID === "control-stock-demo";
+    import.meta.env.VITE_FIREBASE_PROJECT_ID === "control-stock-demo" ||
+    window.location.href.includes("control-stock-demo") ||
+    window.location.href.includes("localhost"); // Para desarrollo local
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +45,7 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
+    <div className={`login-container ${isDemo ? "demo-login" : ""}`}>
       <div className="login-background"></div>
 
       <div className="login-card">
@@ -108,28 +110,38 @@ const Login = () => {
             </button>
           </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            fullWidth
-            loading={loading}
-          >
-            Iniciar Sesión
-          </Button>
-
-          {isDemo && (
-            <div className="demo-buttons">
+          {isDemo ? (
+            <div className="demo-buttons-container">
               <Button
-                type="button"
-                variant="secondary"
+                type="submit"
+                variant="primary"
                 size="md"
-                onClick={fillDemoCredentials}
-                disabled={loading}
+                loading={loading}
               >
-                Usar Credenciales Demo
+                Iniciar Sesión
               </Button>
+              <div className="demo-buttons">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  onClick={fillDemoCredentials}
+                  disabled={loading}
+                >
+                  Usar Credenciales Demo
+                </Button>
+              </div>
             </div>
+          ) : (
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              fullWidth
+              loading={loading}
+            >
+              Iniciar Sesión
+            </Button>
           )}
         </form>
 
