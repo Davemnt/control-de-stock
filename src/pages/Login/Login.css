@@ -235,6 +235,12 @@
 
 .demo-buttons .btn {
   flex: 1;
+  height: 25px;
+  min-height: 25px;
+  max-height: 25px;
+  width: 40%;
+  padding: 0 var(--spacing-sm);
+  font-size: 0.75rem;
 }
 
 @media (max-width: 768px) {
