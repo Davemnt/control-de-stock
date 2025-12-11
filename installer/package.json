@@ -1,7 +1,7 @@
 {
   "name": "control-stock-installer",
-  "version": "1.0.0",
-  "description": "Instalador automático de Control de Stock para nuevos clientes",
+  "version": "2.0.0",
+  "description": "Instalador automático de Control de Stock v2.0 - Responsive, Demo Separado, Completamente Documentado",
   "main": "install.mjs",
   "type": "module",
   "scripts": {
@@ -15,9 +15,12 @@
     "installer",
     "control-stock",
     "firebase",
-    "automation"
+    "automation",
+    "responsive",
+    "business-tool",
+    "inventory-management"
   ],
-  "author": "David Monte",
+  "author": "David Montenegro",
   "license": "PROPRIETARY",
   "dependencies": {
     "inquirer": "^9.2.12",

@@ -1,11 +1,16 @@
+/* 🏗️ CONTENEDOR PRINCIPAL DEL LOGIN
+   Este es el wrapper principal que centra todo el contenido */
 .login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-lg);
-  position: relative;
-  overflow: hidden;
+  min-height: 100vh; /* 📏 Altura mínima de toda la pantalla */
+  display: flex; /* 🎯 Flexbox para centrar contenido */
+  align-items: center; /* ⬆️ Centrar verticalmente */
+  justify-content: center; /* ➡️ Centrar horizontalmente */
+  padding: var(--spacing-lg); /* 🎨 Espaciado interno */
+  position: relative; /* 📐 Para posicionar elementos hijos */
+  overflow: hidden; /* 🚫 Evitar scroll horizontal */
+
+  /* 📱 RESPONSIVE: Se adapta automáticamente gracias a flexbox */
+  box-sizing: border-box; /* 📦 Incluir padding en el ancho total */
 }
 
 .login-background {
@@ -27,17 +32,23 @@
   z-index: 0;
 }
 
+/* 🎴 TARJETA PRINCIPAL DEL LOGIN
+   Contiene todo el formulario y se adapta responsivamente */
 .login-card {
-  background-color: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-2xl);
-  width: 100%;
-  max-width: 450px;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  z-index: 1;
-  animation: fadeIn 0.5s ease-out;
+  background-color: var(--c-surface); /* 🎨 Color de fondo dinámico */
+  border: 1px solid var(--c-border); /* 🖼️ Borde sutil */
+  border-radius: var(--radius-xl); /* 🔘 Esquinas redondeadas */
+  padding: var(--spacing-2xl); /* 🎯 Espaciado interno generoso */
+  width: 100%; /* 📐 Se adapta al contenedor padre */
+  max-width: 450px; /* 🎯 Ancho máximo para pantallas grandes */
+  box-shadow: var(--shadow-xl); /* ✨ Sombra elegante */
+  position: relative; /* 📐 Para elementos posicionados */
+  z-index: 1; /* 📚 Aparecer sobre el fondo */
+  animation: fadeIn 0.5s ease-out; /* 🎬 Animación suave de entrada */
+
+  /* 📱 RESPONSIVE: En móviles se adapta automáticamente */
+  box-sizing: border-box; /* 📦 Cálculo correcto de dimensiones */
+  transition: all 0.3s ease; /* 🎭 Transiciones suaves */
 }
 
 .login-header {
@@ -226,23 +237,29 @@
   max-height: 38px;
 }
 
-/* Botones GRANDES SOLO para versión DEMO */
+/* 🟢 BOTONES GRANDES SOLO PARA VERSIÓN DEMO
+   Estos estilos solo se aplican cuando .demo-login está presente
+   Hace los botones grandes y visualmente atractivos para demos */
 .demo-login .login-form .btn {
-  width: 220px;
-  height: 175px;
-  min-height: 175px;
-  max-height: 175px;
-  padding: var(--spacing-md);
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  line-height: 1.4;
-  margin: 0 auto var(--spacing-md);
-  flex: none;
+  width: 220px; /* 📏 Ancho fijo para consistencia */
+  height: 175px; /* 📏 Alto generoso para visibilidad */
+  min-height: 175px; /* 🎯 Altura mínima garantizada */
+  max-height: 175px; /* 🎯 Altura máxima controlada */
+  padding: var(--spacing-md); /* 🎨 Espaciado interno */
+  font-size: 1rem; /* 🔤 Texto legible */
+  font-weight: 600; /* 💪 Texto en negrita */
+  display: flex; /* 🎯 Flexbox para centrar contenido */
+  flex-direction: column; /* ⬇️ Apilar elementos verticalmente */
+  align-items: center; /* ➡️ Centrar horizontalmente */
+  justify-content: center; /* ⬆️ Centrar verticalmente */
+  text-align: center; /* 📝 Texto centrado */
+  line-height: 1.4; /* 📏 Espaciado entre líneas */
+  margin: 0 auto var(--spacing-md); /* 🎯 Centrar y espaciar */
+  flex: none; /* 🚫 No crecer ni encogerse */
+
+  /* 🎭 EFECTOS VISUALES */
+  transition: all 0.3s ease; /* ⚡ Animaciones suaves */
+  cursor: pointer; /* 👆 Indicar que es clickeable */
 }
 
 .demo-login .login-form .btn[type="submit"] {
@@ -273,20 +290,26 @@
   line-height: 1.4;
 }
 
-/* Layout de botones en versión demo - UNO AL LADO DEL OTRO */
+/* 🎯 LAYOUT DE BOTONES EN VERSIÓN DEMO - DISEÑO HORIZONTAL
+   Organiza los botones uno al lado del otro para mejor UX en demo */
 .demo-login .login-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
+  display: flex; /* 🎯 Flexbox para organización */
+  flex-direction: column; /* ⬇️ Elementos apilados verticalmente */
+  gap: var(--spacing-lg); /* 📏 Espaciado entre elementos */
+  margin-bottom: var(--spacing-xl); /* 🎨 Margen inferior */
 }
 
+/* 🎮 CONTENEDOR DE BOTONES DEMO
+   Organiza los botones de acción de la demo horizontalmente */
 .demo-login .demo-buttons-container {
-  display: flex;
-  gap: var(--spacing-lg);
-  width: 100%;
-  justify-content: center;
-  align-items: flex-start;
+  display: flex; /* 🎯 Flexbox para alineación horizontal */
+  gap: var(--spacing-lg); /* 📏 Separación entre botones */
+  width: 100%; /* 📐 Ocupa todo el ancho disponible */
+  justify-content: center; /* ➡️ Centrar botones horizontalmente */
+  align-items: flex-start; /* ⬆️ Alinear al inicio verticalmente */
+
+  /* 📱 RESPONSIVE: En móviles se convierte en columna (ver media queries) */
+  flex-wrap: wrap; /* 🔄 Permitir salto de línea si es necesario */
 }
 
 /* Botones demo GRANDES solo en versión demo */
@@ -302,61 +325,136 @@
   flex: 0 0 auto;
 }
 
-/* Estilo especial para el botón de credenciales demo - TEMA OSCURO */
+/* 🌙 TEMA OSCURO - BOTÓN SECUNDARIO DEMO
+   Estilo especial para el botón de credenciales automáticas en tema oscuro */
 .demo-buttons .btn-secondary,
 .demo-login .demo-buttons .btn-secondary {
-  background: linear-gradient(135deg, #4c1d95, #5b21b6);
-  border: 2px solid #7c3aed;
-  color: #ffffff;
-  box-shadow: 0 4px 8px rgba(124, 58, 237, 0.3);
+  background: linear-gradient(
+    135deg,
+    #4c1d95,
+    #5b21b6
+  ); /* 🟣 Gradiente morado */
+  border: 2px solid #7c3aed; /* 🖼️ Borde morado brillante */
+  color: #ffffff; /* 🔤 Texto blanco para contraste */
+  box-shadow: 0 4px 8px rgba(124, 58, 237, 0.3); /* ✨ Sombra morada */
+
+  /* 🎭 EFECTOS DE INTERACCIÓN */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* ⚡ Transición suave */
 }
 
+/* 👆 HOVER - BOTÓN SECUNDARIO TEMA OSCURO
+   Efectos visuales cuando el usuario pasa el mouse por encima */
 .demo-buttons .btn-secondary:hover:not(:disabled),
 .demo-login .demo-buttons .btn-secondary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5b21b6, #6d28d9);
-  border-color: #8b5cf6;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(124, 58, 237, 0.4);
+  background: linear-gradient(
+    135deg,
+    #5b21b6,
+    #6d28d9
+  ); /* 🟣 Gradiente más brillante */
+  border-color: #8b5cf6; /* 🖼️ Borde más claro */
+  transform: translateY(-2px); /* ⬆️ Efecto de elevación */
+  box-shadow: 0 8px 16px rgba(124, 58, 237, 0.4); /* ✨ Sombra más intensa */
+
+  /* 🎯 FEEDBACK VISUAL para mejorar UX */
+  cursor: pointer; /* 👆 Confirmar que es clickeable */
 }
 
-/* Tema claro - botón demo */
+/* ☀️ TEMA CLARO - BOTÓN SECUNDARIO DEMO
+   Adaptación del botón para el tema claro con colores azules */
 [data-theme="light"] .demo-buttons .btn-secondary,
 [data-theme="light"] .demo-login .demo-buttons .btn-secondary {
-  background: linear-gradient(135deg, #1e40af, #2563eb);
-  border: 2px solid #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #1e40af, #2563eb); /* 🔵 Gradiente azul */
+  border: 2px solid #3b82f6; /* 🖼️ Borde azul brillante */
+  color: #ffffff; /* 🔤 Texto blanco para contraste */
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3); /* ✨ Sombra azul */
+
+  /* 🎨 CONSISTENCIA: Mismos efectos que tema oscuro pero colores diferentes */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* ⚡ Transición idéntica */
 }
 
+/* 👆 HOVER - TEMA CLARO BOTÓN SECUNDARIO
+   Efectos de hover consistentes con el tema claro */
 [data-theme="light"] .demo-buttons .btn-secondary:hover:not(:disabled),
 [data-theme="light"]
   .demo-login
   .demo-buttons
   .btn-secondary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  border-color: #60a5fa;
-  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(
+    135deg,
+    #2563eb,
+    #3b82f6
+  ); /* 🔵 Azul más brillante */
+  border-color: #60a5fa; /* 🖼️ Borde azul claro */
+  transform: translateY(-2px); /* ⬆️ Misma elevación que tema oscuro */
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4); /* ✨ Sombra azul intensa */
+
+  /* 🎯 COHERENCIA: Mismo comportamiento en ambos temas */
+  cursor: pointer; /* 👆 Indicador de interacción */
 }
 
-@media (max-width: 768px) {
-  .login-container {
-    padding: var(--spacing-md);
+/* ========================================
+   📱 RESPONSIVE DESIGN - MEDIA QUERIES
+   ======================================== */
+
+/* 📋 GUÍA RESPONSIVE: Las media queries permiten adaptar el diseño
+   a diferentes tamaños de pantalla. Se aplican de mayor a menor */
+
+/* 💻 TABLETS Y PANTALLAS MEDIANAS (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+  /* 🎯 Demo: Botones medianos para tablets */
+  .demo-login .demo-buttons .btn,
+  .demo-login .login-form .btn {
+    height: 140px;
+    width: 180px;
+    font-size: 0.95rem;
   }
 
   .login-card {
-    padding: var(--spacing-xl);
+    max-width: 500px;
+  }
+}
+
+/* 📱 MOBILE Y TABLETS PEQUEÑAS (hasta 768px) */
+@media (max-width: 768px) {
+  /* 🏗️ ESTRUCTURA BASE: Ajustes generales para mobile */
+  .login-container {
+    padding: var(--spacing-sm); /* ⚡ Menos padding en móvil */
+    min-height: 100vh;
   }
 
+  .login-card {
+    padding: var(--spacing-lg);
+    max-width: 100%; /* 📐 Ocupa todo el ancho disponible */
+    margin: 0 var(--spacing-sm);
+  }
+
+  /* 🎨 HEADER: Logo y títulos más pequeños */
   .login-header h1 {
-    font-size: 1.75rem;
+    font-size: 1.5rem; /* 📏 Título más pequeño */
   }
 
   .login-logo-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 2.5rem;
+    width: 56px;
+    height: 56px;
+    font-size: 2.2rem;
   }
 
+  /* 🟢 DEMO: Botones apilados verticalmente en móvil */
+  .demo-login .demo-buttons-container {
+    flex-direction: column; /* 📱 Cambiar a columna */
+    gap: var(--spacing-md);
+    align-items: center;
+  }
+
+  .demo-login .demo-buttons .btn,
+  .demo-login .login-form .btn {
+    height: 100px; /* 📏 Más pequeños en móvil */
+    width: 100%;
+    max-width: 280px; /* 🎯 Ancho máximo controlado */
+    font-size: 0.9rem;
+  }
+
+  /* 🔒 CONTROLES: Ajustar botón de mostrar contraseña */
   .password-toggle {
     right: 12px;
     width: 28px;
@@ -366,5 +464,60 @@
 
   .password-input-container .input-wrapper input {
     padding-right: 44px !important;
+  }
+}
+
+/* 📱 MÓVILES PEQUEÑOS (hasta 480px) */
+@media (max-width: 480px) {
+  /* 🎯 DEMO: Ajustes para pantallas muy pequeñas */
+  .login-container {
+    padding: var(--spacing-xs);
+  }
+
+  .login-card {
+    padding: var(--spacing-md);
+    margin: 0;
+  }
+
+  .login-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .login-header p {
+    font-size: 0.8rem;
+  }
+
+  /* 🟢 DEMO: Botones más compactos */
+  .demo-login .demo-buttons .btn,
+  .demo-login .login-form .btn {
+    height: 80px;
+    font-size: 0.85rem;
+    padding: var(--spacing-sm);
+  }
+
+  /* 🏷️ BANNER: Más compacto */
+  .demo-info-banner {
+    padding: var(--spacing-sm);
+    font-size: 0.8rem;
+  }
+
+  /* 🔤 FORMULARIO: Inputs más compactos */
+  .input-wrapper {
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+/* 🖥️ PANTALLAS GRANDES (más de 1200px) */
+@media (min-width: 1200px) {
+  /* 🎯 Demo: Botones más grandes en pantallas amplias */
+  .demo-login .demo-buttons .btn,
+  .demo-login .login-form .btn {
+    height: 160px;
+    width: 240px;
+    font-size: 1.1rem;
+  }
+
+  .login-card {
+    max-width: 520px;
   }
 }

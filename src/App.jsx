@@ -1,17 +1,33 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import ProtectedRoute from "./components/ProtectedRoute";
+/* 📚 GUÍA TRAINEE - COMPONENTE APP PRINCIPAL
+   =========================================
+   
+   Este es el componente raíz de toda la aplicación.
+   Define las rutas, proveedores de contexto y lógica de navegación.
+   
+   🔑 RESPONSABILIDADES:
+   - ✅ Configurar rutas de la aplicación
+   - ✅ Proveer contextos globales (Auth, Theme)
+   - ✅ Proteger rutas que requieren autenticación
+   - ✅ Detectar modo demo vs producción
+   - ✅ Manejar redirecciones
+*/
 
-// Páginas
-import Login from "./pages/Login/Login";
-import Dashboard from "./pages/Dashboard/Dashboard";
-import Materiales from "./pages/Materiales/Materiales";
-import Movimientos from "./pages/Movimientos/Movimientos";
-import Historial from "./pages/Historial/Historial";
-import Usuarios from "./pages/Usuarios/Usuarios";
-import Configuracion from "./pages/Configuracion/Configuracion";
+// 📦 IMPORTS PRINCIPALES
+import React from "react"; // ⚛️ Biblioteca principal
+import { Routes, Route, Navigate } from "react-router-dom"; // 🧭 Sistema de rutas
+import { useAuth } from "./contexts/AuthContext"; // 🔐 Contexto de autenticación
+import { ThemeProvider } from "./contexts/ThemeContext"; // 🎨 Contexto de temas
+import ProtectedRoute from "./components/ProtectedRoute"; // 🛡️ Protección de rutas
+
+// 📄 PÁGINAS DE LA APLICACIÓN
+// Cada import representa una pantalla completa del sistema
+import Login from "./pages/Login/Login"; // 🔐 Página de autenticación
+import Dashboard from "./pages/Dashboard/Dashboard"; // 🏠 Panel principal
+import Materiales from "./pages/Materiales/Materiales"; // 📦 Gestión de inventario
+import Movimientos from "./pages/Movimientos/Movimientos"; // 🔄 Registro de movimientos
+import Historial from "./pages/Historial/Historial"; // 📅 Historial de actividad
+import Usuarios from "./pages/Usuarios/Usuarios"; // 👥 Administración de usuarios
+import Configuracion from "./pages/Configuracion/Configuracion"; // ⚙️ Configuraciones del sistema
 
 function App() {
   const { currentUser } = useAuth();

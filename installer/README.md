@@ -1,13 +1,38 @@
-# 🚀 Control de Stock - Instalador Profesional
+# 🚀 Control de Stock v2.0 - Instalador Profesional
 
-Sistema automatizado para desplegar Control de Stock a nuevos clientes.
+## 🆕 NUEVA VERSIÓN 2.0 - DICIEMBRE 2025
 
-## 📋 Requisitos Previos
+Sistema automatizado para desplegar Control de Stock v2.0 a nuevos clientes.
 
-- Node.js 18 o superior
-- Firebase CLI instalado globalmente
-- Cuenta de Google Cloud con Firebase habilitado
-- Permisos de administrador en Firebase
+### ✨ Nuevas Funcionalidades v2.0:
+
+- ✅ **Responsive Design Completo**: 4 breakpoints específicos
+- ✅ **Demo Separado**: Proyectos Firebase independientes
+- ✅ **Código 100% Documentado**: +300 comentarios explicativos
+- ✅ **Scripts de Deploy Dual**: Demo y producción separados
+- ✅ **Guía para Trainee**: Transferible a cualquier desarrollador
+
+## 📋 Requisitos Previos v2.0
+
+### 🔧 Software Necesario:
+
+- **Node.js 18 o superior** (LTS recomendado)
+- **Firebase CLI instalado globalmente**: `npm install -g firebase-tools`
+- **Git** (para clonación de repositorio)
+- **Editor de código** (VS Code recomendado)
+
+### ☁️ Cuentas Requeridas:
+
+- **Cuenta Google Cloud** con Firebase habilitado
+- **Permisos de administrador** en Firebase
+- **Cuenta GitHub** (opcional, para deployments avanzados)
+
+### 💻 Especificaciones Mínimas:
+
+- **RAM**: 8GB mínimo (16GB recomendado)
+- **Almacenamiento**: 2GB libres
+- **Internet**: Conexión estable (para deploy)
+- **OS**: Windows 10+, macOS 10.15+, Ubuntu 18.04+
 
 ## 🔧 Instalación del Instalador
 
@@ -15,42 +40,70 @@ Sistema automatizado para desplegar Control de Stock a nuevos clientes.
 npm install
 ```
 
-## 📦 Contenido del Paquete
+## 📦 Contenido del Paquete v2.0
 
 ```
 installer/
-├── install.mjs           # Script principal de instalación
-├── config.template.json  # Template de configuración
-├── utils/
-│   ├── firebase.mjs      # Utilidades de Firebase
-│   ├── email.mjs         # Envío de credenciales
-│   └── logger.mjs        # Sistema de logs
-├── templates/
-│   ├── .env.template     # Template de variables de entorno
-│   ├── firestore.rules   # Reglas de seguridad
-│   └── welcome-email.html # Email de bienvenida
-└── docs/
-    ├── MANUAL_INSTALACION.md
-    └── MANUAL_CLIENTE.pdf
+├── 📄 install.mjs                    # Script principal de instalación
+├── 📄 install-client-autonomo.mjs    # Instalación autónoma
+├── 📄 admin-panel.mjs               # Panel de administración
+├── 📄 guia-rapida.mjs              # Guía rápida interactiva
+├── 📄 package.json                 # Dependencias v2.0
+├── 📄 .gitignore                   # Configuración Git
+├── 📄 LICENCIA.md                  # Términos de licencia
+├── 📄 README.md                    # Documentación principal
+├── 📄 README_NUEVO.md              # Novedades v2.0
+├── 📄 INSTALACION_AUTONOMA.md      # Guía instalación independiente
+├── 📄 MODELO_DE_NEGOCIO.md         # Estrategias de monetización
+└── 📄 SISTEMA_SUSCRIPCIONES.md     # Gestión de pagos recurrentes
 ```
 
-## 🎯 Uso
+## 🎯 Uso v2.0
 
-### Instalación Completa de Nuevo Cliente
+### 🚀 Instalación Completa de Nuevo Cliente (RECOMENDADO)
 
 ```bash
 npm run install-client
 ```
 
-El instalador te guiará paso a paso para:
+### 🆕 Instalación Autónoma (NUEVO)
 
-1. ✅ Crear proyecto Firebase nuevo
-2. ✅ Configurar Firestore y Authentication
-3. ✅ Desplegar aplicación web
-4. ✅ Crear usuario administrador
-5. ✅ Cargar datos de ejemplo (opcional)
-6. ✅ Enviar credenciales por email
-7. ✅ Generar documentación personalizada
+```bash
+npm run install-autonomo
+```
+
+### 🔧 Panel de Administración (NUEVO)
+
+```bash
+npm run admin
+```
+
+### 📚 Guía Rápida Interactiva (NUEVO)
+
+```bash
+npm run guia
+```
+
+## ✨ El Instalador v2.0 te guía para:
+
+### 🔥 Funcionalidades Core:
+
+1. ✅ **Crear 2 proyectos Firebase**: Demo + Producción separados
+2. ✅ **Configurar Firestore y Authentication**
+3. ✅ **Desplegar aplicación responsive**: Mobile-first design
+4. ✅ **Setup demo independiente**: Con interfaz especial
+5. ✅ **Crear usuario administrador**
+6. ✅ **Configurar variables de entorno**
+
+### 🆕 Nuevas Mejoras v2.0:
+
+7. ✅ **Deploy dual automático**: Scripts de demo y producción
+8. ✅ **Documentación trainee**: Código completamente comentado
+9. ✅ **Responsive certificado**: 4 breakpoints específicos
+10. ✅ **Separación garantizada**: Datos nunca se mezclan
+11. ✅ Cargar datos de ejemplo (opcional)
+12. ✅ Enviar credenciales por email
+13. ✅ Generar documentación personalizada
 
 ### Opciones Disponibles
 
