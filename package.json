@@ -1,19 +1,15 @@
 {
-  "name": "control-stock-eventos",
+  "name": "control-stock-produccion",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Sistema profesional de Control de Stock para productora técnica de eventos",
+  "description": "Sistema profesional de Control de Stock para productora técnica de eventos - Versión Producción",
   "scripts": {
     "dev": "vite --mode production",
-    "dev:demo": "vite --mode demo",
     "build": "vite build --mode production",
-    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
-    "preview:demo": "vite preview --mode demo",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "deploy": "npm run build && firebase use dave && firebase deploy --only hosting",
-    "deploy:demo": "npm run build:demo && firebase use demo && firebase deploy --only hosting"
+    "deploy": "npm run build && firebase use dave && firebase deploy --only hosting"
   },
   "dependencies": {
     "date-fns": "^3.3.1",
