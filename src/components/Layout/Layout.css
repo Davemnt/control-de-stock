@@ -6,78 +6,313 @@
 
 .layout-main {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  margin-left: 280px;
-  transition: margin-left var(--transition-slow);
+  margin-left: var(--sidebar-width);
 }
 
-.layout-header {
+/* ---------- Barra superior ---------- */
+.layout-topbar {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background-color: var(--c-surface);
-  border-bottom: 1px solid var(--c-border);
-  padding: var(--spacing-lg);
+  height: var(--topbar-height);
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: 0.75rem;
+  padding: 0 var(--spacing-xl);
+  background-color: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-right: auto;
+  font-size: 0.875rem;
+}
+
+.topbar-crumb {
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+.topbar-sep {
+  color: var(--c-border-strong);
+}
+
+.topbar-page {
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(340px, 32vw);
+  height: 38px;
+  padding: 0 0.5rem 0 0.75rem;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  color: var(--c-text-muted);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.topbar-search:focus-within {
+  background: var(--c-surface);
+  border-color: var(--c-brand);
+  box-shadow: 0 0 0 3px var(--c-brand-soft);
+}
+
+.topbar-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--c-text);
+}
+
+.topbar-search input::placeholder {
+  color: var(--c-text-muted);
+}
+
+.topbar-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.topbar-search kbd {
+  font-family: var(--font-base);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--c-border-strong);
+  border-radius: 4px;
+  background: var(--c-surface);
+}
+
+.topbar-icon-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.topbar-icon-btn:hover {
+  background-color: var(--c-surface-hover);
+  color: var(--c-text);
+}
+
+.topbar-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--c-error);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid var(--c-surface);
+  box-sizing: content-box;
 }
 
 .menu-button {
   display: none;
-  background: none;
-  border: none;
-  color: var(--c-text);
-  cursor: pointer;
-  padding: var(--spacing-sm);
+}
+
+/* ---------- Menú de usuario ---------- */
+.user-menu {
+  position: relative;
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 42px;
+  padding: 0 0.5rem 0 0.25rem;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.menu-button:hover {
-  background-color: var(--c-surface-light);
-  color: var(--c-brand);
+.user-menu-trigger:hover,
+.user-menu-trigger[aria-expanded="true"] {
+  background: var(--c-surface-hover);
 }
 
-.layout-header-content {
-  flex: 1;
+.user-menu-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--c-brand), #f59048);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.layout-title {
-  font-family: var(--font-bold);
-  font-size: 1.5rem;
-  color: var(--c-text-cream);
-  margin: 0;
+.user-menu-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
 }
 
+.user-menu-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--c-text);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu-role {
+  font-size: 0.72rem;
+  color: var(--c-text-muted);
+}
+
+.user-menu-chevron {
+  color: var(--c-text-muted);
+}
+
+.user-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 220px;
+  padding: 0.35rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  animation: fadeIn 0.12s ease-out;
+}
+
+.user-menu-header {
+  display: flex;
+  flex-direction: column;
+  padding: 0.55rem 0.65rem 0.6rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.user-menu-header strong {
+  font-size: 0.85rem;
+}
+
+.user-menu-header span {
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  color: var(--c-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.user-menu-item:hover {
+  background: var(--c-surface-hover);
+  color: var(--c-text);
+}
+
+.user-menu-item.danger:hover {
+  background: var(--c-error-soft);
+  color: var(--c-error);
+}
+
+/* ---------- Aviso sin conexión ---------- */
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem var(--spacing-xl);
+  background: var(--c-warning-soft);
+  color: var(--c-text);
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.offline-banner svg {
+  color: var(--c-warning);
+  flex-shrink: 0;
+}
+
+/* ---------- Contenido ---------- */
 .layout-content {
   flex: 1;
   padding: var(--spacing-xl);
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.25s ease-out;
 }
 
 .layout-footer {
-  padding: var(--spacing-lg);
-  border-top: 1px solid var(--c-border);
+  padding: var(--spacing-md) var(--spacing-xl);
   text-align: center;
-  color: var(--c-text);
-  opacity: 0.7;
-  font-size: 0.875rem;
+  color: var(--c-text-muted);
+  font-size: 0.75rem;
 }
 
-.layout-footer p {
-  margin: 0;
+@media (max-width: 1100px) {
+  .user-menu-text,
+  .user-menu-chevron {
+    display: none;
+  }
+
+  .user-menu-trigger {
+    padding: 0 0.25rem;
+  }
 }
 
-/* Mobile */
 @media (max-width: 1024px) {
   .layout-content {
     padding: var(--spacing-lg);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .layout-main {
     margin-left: 0;
   }
@@ -86,38 +321,34 @@
     display: flex;
   }
 
-  .layout-header {
-    padding: var(--spacing-md);
+  .topbar-crumb,
+  .topbar-sep,
+  .topbar-search kbd {
+    display: none;
   }
 
-  .layout-title {
-    font-size: 1.125rem;
+  .layout-topbar {
+    height: 56px;
+    padding: 0 var(--spacing-md);
+    gap: 0.5rem;
+  }
+
+  .topbar-search {
+    width: auto;
+    flex: 1;
+  }
+
+  .topbar-title {
+    margin-right: 0;
   }
 
   .layout-content {
     padding: var(--spacing-md);
-  }
-
-  .layout-footer {
-    padding: var(--spacing-md);
-    font-size: 0.8125rem;
   }
 }
 
-@media (max-width: 480px) {
-  .layout-header {
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-
-  .layout-title {
-    font-size: 1rem;
-  }
-
-  .layout-content {
-    padding: var(--spacing-sm);
-  }
-
-  .layout-footer {
-    font-size: 0.75rem;
+@media (max-width: 520px) {
+  .topbar-title {
+    display: none;
   }
 }

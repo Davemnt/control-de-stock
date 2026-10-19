@@ -50,7 +50,12 @@ console.log(
 console.log("⚠️  Asegúrate de tener las credenciales correctas del cliente\n");
 
 try {
-  // 1. Solicitar credenciales del nuevo administrador
+  // 1. Solicitar credenciales del administrador actual y del nuevo
+  console.log("🔐 ADMINISTRADOR ACTUAL:");
+  const adminEmail = await pregunta("   Email actual: ");
+  const adminPassword = await pregunta("   Contraseña actual: ");
+
+  console.log("");
   console.log("📧 NUEVAS CREDENCIALES DEL CLIENTE:");
   const nuevoEmail = await pregunta("   Email del cliente: ");
   const nuevaPassword = await pregunta("   Contraseña del cliente: ");
@@ -68,49 +73,45 @@ try {
     process.exit(0);
   }
 
-  // 2. Autenticarse como administrador actual
-  console.log("\n🔐 Autenticándose como administrador actual...");
-  await signInWithEmailAndPassword(
-    auth,
-    "montedavid07@hotmail.com",
-    "Moroni1032!"
-  );
-  console.log("✅ Autenticado correctamente");
-
-  // 3. Desactivar cuenta actual
-  console.log("\n🔒 Desactivando cuenta actual...");
-  const currentAdminRef = doc(db, "users", auth.currentUser.uid);
-  await updateDoc(currentAdminRef, {
-    active: false,
-    deactivatedAt: serverTimestamp(),
-    deactivatedReason: `Transferido a cliente: ${nuevoEmail}`,
-  });
-  console.log("✅ Cuenta anterior desactivada");
-
-  // 4. Cerrar sesión
-  await signOut(auth);
-
-  // 5. Crear nueva cuenta de administrador
-  console.log("\n👤 Creando nueva cuenta de administrador...");
+  // 2. Crear la cuenta nueva (Firebase inicia sesión con ella)
+  console.log("\nCreando nueva cuenta de administrador...");
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     nuevoEmail,
     nuevaPassword
   );
   const nuevoUID = userCredential.user.uid;
+  await signOut(auth);
 
-  // 6. Crear documento de usuario administrador
-  console.log("📝 Configurando perfil de administrador...");
+  // 3. Volver a entrar como administrador actual: las reglas de seguridad
+  //    sólo permiten que un admin cree perfiles de administrador
+  console.log("\nAutenticándose como administrador actual...");
+  await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+  const adminActualUID = auth.currentUser.uid;
+  console.log("Autenticado correctamente");
+
+  // 4. Crear el perfil del nuevo administrador
+  console.log("Configurando perfil de administrador...");
   await setDoc(doc(db, "users", nuevoUID), {
     uid: nuevoUID,
-    email: nuevoEmail,
+    email: nuevoEmail.toLowerCase(),
     name: nombreCliente,
     role: "admin",
     active: true,
     createdAt: serverTimestamp(),
-    transferredFrom: "montedavid07@hotmail.com",
+    transferredFrom: adminEmail,
     isMainAdmin: true,
   });
+
+  // 5. Desactivar la cuenta anterior (al final, mientras aún es admin)
+  console.log("\nDesactivando cuenta actual...");
+  await updateDoc(doc(db, "users", adminActualUID), {
+    active: false,
+    deactivatedAt: serverTimestamp(),
+    deactivatedReason: `Transferido a cliente: ${nuevoEmail}`,
+  });
+  await signOut(auth);
+  console.log("Cuenta anterior desactivada");
 
   console.log("\n🎉 ¡CAMBIO COMPLETADO EXITOSAMENTE!");
   console.log("=======================================");
@@ -120,7 +121,7 @@ try {
   console.log("✅ Sistema demo sigue funcionando");
 
   console.log("\n📋 CREDENCIALES PARA EL CLIENTE:");
-  console.log(`   🌐 URL: https://control-de-stock-e4f5f.web.app`);
+  console.log(`   🌐 URL: https://${process.env.VITE_FIREBASE_PROJECT_ID}.web.app`);
   console.log(`   📧 Email: ${nuevoEmail}`);
   console.log(`   🔑 Contraseña: ${nuevaPassword}`);
   console.log(`   👤 Rol: Administrador (acceso completo)`);

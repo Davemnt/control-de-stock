@@ -1,0 +1,11 @@
+{
+  "name": "Aurea",
+  "logo": "logo.png",
+  "loginBackground": "login-bg.png",
+  "icon192": "icon-192.png",
+  "icon512": "icon-512.png",
+  "theme": "theme.css",
+  "themeColor": "#262727",
+  "backgroundColor": "#f0edd6",
+  "fonts": "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&display=swap"
+}

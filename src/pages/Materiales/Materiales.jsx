@@ -1,386 +1,414 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
-  Filter,
-  Grid,
+  LayoutGrid,
   List,
   Edit,
   Trash2,
-  Eye,
-  Camera,
+  ScanLine,
   FileDown,
+  FileSpreadsheet,
+  QrCode,
+  Upload,
+  Package,
+  MapPin,
+  X,
+  SearchX,
 } from "lucide-react";
-import {
-  collection,
-  query,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
+import toast from "react-hot-toast";
 import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
+import { useCategories, useMaterials } from "../../hooks/useFirestore";
+import { COLLECTIONS, STATUS_LABELS } from "../../constants";
+import { exportToExcel } from "../../utils/exportExcel";
+import { getCategoryVisual } from "../../utils/categoryVisual";
 import {
-  COLLECTIONS,
-  CATEGORIES,
-  CATEGORY_LABELS,
-  STATUS_LABELS,
-} from "../../constants";
+  getStock,
+  getStockLevel,
+  normalize,
+  STOCK_LEVEL_LABELS,
+  toDate,
+} from "../../utils/stock";
 import Layout from "../../components/Layout/Layout";
-import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Badge from "../../components/Badge/Badge";
-import Modal from "../../components/Modal/Modal";
+import PageHeader from "../../components/PageHeader/PageHeader";
+import EmptyState from "../../components/EmptyState/EmptyState";
+import Loader from "../../components/Loader/Loader";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import BarcodeScanner from "../../components/BarcodeScanner/BarcodeScanner";
-import ImageUploadWidget from "../../components/ImageUploadWidget/ImageUploadWidget";
-import { exportMaterialsToPDF } from "../../utils/pdfExport";
-import toast from "react-hot-toast";
+import MaterialForm from "./MaterialForm";
+import MaterialDetail from "./MaterialDetail";
+import ImportDialog from "./ImportDialog";
+import LabelsDialog from "../../components/LabelsDialog/LabelsDialog";
 import "./Materiales.css";
 
+const PAGE_SIZE = 24;
+const LEVEL_VARIANT = { out: "error", low: "warning", ok: "success" };
+
+const STOCK_FILTERS = {
+  all: "Todo el stock",
+  alert: "Con alertas",
+  low: "Stock bajo",
+  out: "Sin stock",
+  maintenance: "En mantenimiento",
+};
+
+const SORTS = {
+  name: "Nombre (A-Z)",
+  code: "Código",
+  "stock-asc": "Menor stock",
+  "stock-desc": "Mayor stock",
+  recent: "Más recientes",
+};
+
+/** Foto del material o, si no tiene, icono de su categoría */
+const MaterialMedia = ({ material }) => {
+  const { icon: Icon, style } = getCategoryVisual(material.category);
+  return (
+    <div className={`material-media ${material.imageUrl ? "" : "cat-tint"}`} style={style}>
+      {material.imageUrl ? (
+        <img src={material.imageUrl} alt="" loading="lazy" />
+      ) : (
+        <Icon size={30} strokeWidth={1.6} />
+      )}
+    </div>
+  );
+};
+
+const MaterialThumb = ({ material }) => {
+  const { icon: Icon, style } = getCategoryVisual(material.category);
+  return (
+    <span className={`material-thumb ${material.imageUrl ? "" : "cat-tint"}`} style={style}>
+      {material.imageUrl ? <img src={material.imageUrl} alt="" loading="lazy" /> : <Icon size={16} />}
+    </span>
+  );
+};
+
+const readViewMode = () => {
+  try {
+    return localStorage.getItem("materials-view") || "grid";
+  } catch {
+    return "grid";
+  }
+};
+
 const Materiales = () => {
-  const { userData, isAdmin, isEmployee, isUser, isGuest } = useAuth();
-  const [materials, setMaterials] = useState([]);
-  const [filteredMaterials, setFilteredMaterials] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("grid");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
+  const { isAdmin, isEmployee, isGuest } = useAuth();
+  const { materials, loading } = useMaterials();
+  const { categories, getLabel } = useCategories();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [search, setSearch] = useState(searchParams.get("buscar") || "");
+  const [category, setCategory] = useState(searchParams.get("categoria") || "all");
+  const [status, setStatus] = useState("all");
+  const [stockFilter, setStockFilter] = useState(searchParams.get("stock") || "all");
+  const [sort, setSort] = useState("name");
+  const [viewMode, setViewMode] = useState(readViewMode);
+  const [visible, setVisible] = useState(PAGE_SIZE);
+
+  const [formTarget, setFormTarget] = useState(null); // null | "new" | material
+  const [toDelete, setToDelete] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    category: "",
-    subcategory: "",
-    quantity: 0,
-    quantityCommitted: 0,
-    quantityMaintenance: 0,
-    location: "Deposito Principal",
-    status: "operativo",
-    notes: "",
-    imageUrl: "",
-    imagePath: "",
-  });
+  const [showLabels, setShowLabels] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+
+  const canCreate = isAdmin || isEmployee;
+  const detailId = searchParams.get("ver");
+  const detailMaterial = detailId ? materials.find((m) => m.id === detailId) : null;
 
   useEffect(() => {
-    loadData();
-  }, []);
+    try {
+      localStorage.setItem("materials-view", viewMode);
+    } catch {
+      // sin almacenamiento: no se recuerda la vista
+    }
+  }, [viewMode]);
 
+  useEffect(() => setVisible(PAGE_SIZE), [search, category, status, stockFilter, sort]);
+
+  // Búsqueda que llega desde el buscador global de la barra superior
+  const searchParam = searchParams.get("buscar");
   useEffect(() => {
-    filterMaterials();
-  }, [materials, searchTerm, categoryFilter, statusFilter]);
+    if (searchParam !== null) setSearch(searchParam);
+  }, [searchParam]);
 
-  const loadData = async () => {
-    try {
-      // Cargar categorías
-      const configDoc = await getDoc(doc(db, "system", "categories"));
-      let categoriesList = [];
+  // Filtros que llegan por URL (desde el dashboard o la campana de alertas)
+  const stockParam = searchParams.get("stock");
+  const categoryParam = searchParams.get("categoria");
+  useEffect(() => {
+    if (stockParam) setStockFilter(stockParam);
+  }, [stockParam]);
+  useEffect(() => {
+    if (categoryParam) setCategory(categoryParam);
+  }, [categoryParam]);
 
-      if (configDoc.exists()) {
-        categoriesList = configDoc.data().categories || [];
-      } else {
-        // Categorías por defecto si no existen en Firestore
-        categoriesList = [
-          { key: "Audio", label: "Audio" },
-          { key: "Iluminación", label: "Iluminación" },
-          { key: "Video", label: "Video" },
-          { key: "Rigging", label: "Rigging" },
-          { key: "Estructuras", label: "Estructuras" },
-          { key: "Cables", label: "Cables y Accesorios" },
-          { key: "Mochilas Técnicas", label: "Mochilas Técnicas" },
-          { key: "Repuestos", label: "Repuestos" },
-        ];
-      }
-
-      setCategories(categoriesList);
-
-      // Establecer categoría por defecto en formData
-      if (categoriesList.length > 0 && !formData.category) {
-        setFormData((prev) => ({ ...prev, category: categoriesList[0].key }));
-      }
-
-      // Cargar materiales
-      const materialsSnapshot = await getDocs(
-        collection(db, COLLECTIONS.MATERIALS)
-      );
-      const materialsData = materialsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMaterials(materialsData);
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Error al cargar datos");
-    } finally {
-      setLoading(false);
-    }
+  const openDetail = (id) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("ver", id);
+    setSearchParams(next);
   };
 
-  const loadMaterials = async () => {
-    try {
-      const materialsSnapshot = await getDocs(
-        collection(db, COLLECTIONS.MATERIALS)
-      );
-      const materialsData = materialsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMaterials(materialsData);
-    } catch (error) {
-      console.error("Error loading materials:", error);
-      toast.error("Error al cargar materiales");
-    }
+  const closeDetail = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("ver");
+    setSearchParams(next, { replace: true });
   };
 
-  const filterMaterials = () => {
-    let filtered = [...materials];
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (mat) =>
-          mat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mat.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mat.subcategory?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Category filter
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter((mat) => mat.category === categoryFilter);
-    }
-
-    // Status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((mat) => mat.status === statusFilter);
-    }
-
-    setFilteredMaterials(filtered);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.code) {
-      toast.error("Nombre y código son obligatorios");
-      return;
-    }
-
-    // Validar que quantity sea un número válido
-    const quantity = Number(formData.quantity) || 0;
-    const quantityCommitted = Number(formData.quantityCommitted) || 0;
-    const quantityMaintenance = Number(formData.quantityMaintenance) || 0;
-
-    if (quantity < 0 || quantityCommitted < 0 || quantityMaintenance < 0) {
-      toast.error("Las cantidades no pueden ser negativas");
-      return;
-    }
-
-    try {
-      if (editingMaterial) {
-        // Update - preservar createdAt y createdBy
-        await updateDoc(doc(db, COLLECTIONS.MATERIALS, editingMaterial.id), {
-          name: formData.name.trim(),
-          code: formData.code.trim(),
-          category: formData.category,
-          subcategory: formData.subcategory?.trim() || "",
-          quantity: quantity,
-          quantityCommitted: quantityCommitted,
-          quantityMaintenance: quantityMaintenance,
-          location: formData.location.trim() || "Depósito Principal",
-          status: formData.status || "operativo",
-          notes: formData.notes?.trim() || "",
-          updatedAt: serverTimestamp(),
-        });
-        toast.success("Material actualizado");
-      } else {
-        // Create - incluir TODOS los campos obligatorios según las reglas de Firestore
-        const materialData = {
-          name: String(formData.name || "").trim(),
-          code: String(formData.code || "").trim(),
-          category: String(formData.category || categories[0]?.key || "audio"),
-          subcategory: String(formData.subcategory || "").trim(),
-          quantity: Number(quantity) || 0,
-          quantityCommitted: Number(quantityCommitted) || 0,
-          quantityMaintenance: Number(quantityMaintenance) || 0,
-          location: String(formData.location || "Depósito Principal").trim(),
-          status: String(formData.status || "operativo"),
-          notes: String(formData.notes || "").trim(),
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          createdBy: String(userData?.uid || ""),
-          createdByName: String(userData?.name || "Usuario"),
-        };
-
-        console.log("Creating material with data:", materialData);
-        await addDoc(collection(db, COLLECTIONS.MATERIALS), materialData);
-        toast.success("Material creado exitosamente");
+  const filtered = useMemo(() => {
+    const term = normalize(search.trim());
+    const list = materials.filter((m) => {
+      if (term) {
+        const haystack = normalize(
+          [m.name, m.code, m.category, getLabel(m.category), m.subcategory, m.location, m.notes].join(" ")
+        );
+        if (!haystack.includes(term)) return false;
       }
-
-      setShowModal(false);
-      resetForm();
-      loadMaterials();
-    } catch (error) {
-      console.error("Error saving material:", error);
-
-      // Mensajes de error más descriptivos
-      let errorMessage = "Error al guardar material";
-      if (error.message.includes("permission")) {
-        errorMessage = "No tienes permisos para realizar esta acción";
-      } else if (error.message.includes("invalid")) {
-        errorMessage = "Datos inválidos. Verifica todos los campos";
+      if (category !== "all" && m.category !== category) return false;
+      if (status !== "all" && m.status !== status) return false;
+      if (stockFilter !== "all") {
+        const level = getStockLevel(m);
+        if (stockFilter === "alert" && level === "ok") return false;
+        if (stockFilter === "low" && level !== "low") return false;
+        if (stockFilter === "out" && level !== "out") return false;
+        if (stockFilter === "maintenance" && getStock(m).maintenance === 0) return false;
       }
-
-      toast.error(errorMessage);
-    }
-  };
-
-  const handleEdit = (material) => {
-    setEditingMaterial(material);
-    setFormData({
-      name: material.name || "",
-      code: material.code || "",
-      category:
-        material.category || (categories.length > 0 ? categories[0].key : ""),
-      subcategory: material.subcategory || "",
-      quantity: material.quantity || 0,
-      quantityCommitted: material.quantityCommitted || 0,
-      quantityMaintenance: material.quantityMaintenance || 0,
-      location: material.location || "Deposito Principal",
-      status: material.status || "operativo",
-      notes: material.notes || "",
-      imageUrl: material.imageUrl || "",
-      imagePath: material.imagePath || "",
+      return true;
     });
-    setShowModal(true);
+
+    const sorted = [...list];
+    switch (sort) {
+      case "code":
+        sorted.sort((a, b) => String(a.code).localeCompare(String(b.code), "es"));
+        break;
+      case "stock-asc":
+        sorted.sort((a, b) => getStock(a).available - getStock(b).available);
+        break;
+      case "stock-desc":
+        sorted.sort((a, b) => getStock(b).available - getStock(a).available);
+        break;
+      case "recent":
+        sorted.sort((a, b) => (toDate(b.createdAt) || 0) - (toDate(a.createdAt) || 0));
+        break;
+      default:
+        break; // ya viene ordenado por nombre
+    }
+    return sorted;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materials, categories, search, category, status, stockFilter, sort]);
+
+  const hasFilters =
+    search || category !== "all" || status !== "all" || stockFilter !== "all";
+
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("all");
+    setStatus("all");
+    setStockFilter("all");
+    setSearchParams({}, { replace: true });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este material?")) {
-      return;
+  const handleScan = (code) => {
+    setShowScanner(false);
+    const match = materials.find((m) => normalize(m.code) === normalize(code));
+    if (match) {
+      openDetail(match.id);
+    } else {
+      setSearch(code);
+      toast.error(`No hay ningún material con el código ${code}`);
     }
+  };
 
+  const handleDelete = async () => {
     try {
-      await deleteDoc(doc(db, COLLECTIONS.MATERIALS, id));
+      await deleteDoc(doc(db, COLLECTIONS.MATERIALS, toDelete.id));
       toast.success("Material eliminado");
-      loadMaterials();
+      if (detailId === toDelete.id) closeDetail();
     } catch (error) {
       console.error("Error deleting material:", error);
-      toast.error("Error al eliminar material");
+      toast.error("No se pudo eliminar el material");
+      throw error;
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      code: "",
-      category: categories.length > 0 ? categories[0].key : "",
-      subcategory: "",
-      quantity: 0,
-      quantityCommitted: 0,
-      quantityMaintenance: 0,
-      location: "Depósito Principal",
-      status: "operativo",
-      notes: "",
-      imageUrl: "",
-      imagePath: "",
+  const exportRows = () =>
+    filtered.map((m) => {
+      const s = getStock(m);
+      return {
+        Código: m.code,
+        Nombre: m.name,
+        Categoría: getLabel(m.category),
+        Subcategoría: m.subcategory || "",
+        Ubicación: m.location || "",
+        Estado: STATUS_LABELS[m.status] || m.status,
+        Disponible: s.available,
+        "En uso": s.committed,
+        Mantenimiento: s.maintenance,
+        Total: s.total,
+        Notas: m.notes || "",
+      };
     });
-    setEditingMaterial(null);
+
+  const handleExportExcel = async () => {
+    if (filtered.length === 0) return toast.error("No hay materiales para exportar");
+    try {
+      await exportToExcel(exportRows(), "inventario-materiales", "Inventario");
+      toast.success("Excel generado");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el Excel");
+    }
   };
 
-  const handleNewMaterial = () => {
-    // Si es usuario guest (demo), mostrar mensaje informativo
-    if (isGuest) {
-      toast.info(
-        "👁️ Versión Demo: Esta funcionalidad está disponible solo para usuarios con permisos de edición. Contáctanos para acceso completo.",
-        { duration: 5000 }
+  const handleExportPDF = async () => {
+    if (filtered.length === 0) return toast.error("No hay materiales para exportar");
+    try {
+      const { exportMaterialsToPDF } = await import("../../utils/pdfExport");
+      exportMaterialsToPDF(
+        filtered.map((m) => ({
+          ...m,
+          category: getLabel(m.category),
+          status: STATUS_LABELS[m.status] || m.status,
+        })),
+        {
+          categoryFilter: category !== "all" ? getLabel(category) : "all",
+          statusFilter: status !== "all" ? STATUS_LABELS[status] : "all",
+        }
       );
-      return;
+      toast.success("PDF generado");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el PDF");
     }
-    resetForm();
-    setShowModal(true);
-  };
-
-  const handleBarcodeScanned = (code) => {
-    setFormData({ ...formData, code: code });
-    setShowScanner(false);
-    toast.success(`Código escaneado: ${code}`);
-  };
-
-  const handleExportPDF = () => {
-    exportMaterialsToPDF(filteredMaterials, {
-      categoryFilter,
-      statusFilter,
-    });
-    toast.success("PDF generado exitosamente");
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="materials-loading">
-          <div className="spinner"></div>
-          <p>Cargando materiales...</p>
-        </div>
+        <Loader text="Cargando inventario..." />
       </Layout>
     );
   }
 
+  const shown = filtered.slice(0, visible);
+
+  const renderActions = (material) =>
+    isAdmin && (
+      <div className="material-actions" onClick={(e) => e.stopPropagation()}>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={Edit}
+          onClick={() => setFormTarget(material)}
+          aria-label={`Editar ${material.name}`}
+          title="Editar"
+        />
+        <Button
+          variant="danger-ghost"
+          size="sm"
+          icon={Trash2}
+          onClick={() => setToDelete(material)}
+          aria-label={`Eliminar ${material.name}`}
+          title="Eliminar"
+        />
+      </div>
+    );
+
   return (
     <Layout>
-      <div className="materials">
-        <div className="materials-header">
-          <div>
-            <h1>Catálogo de Materiales</h1>
-            <p>{filteredMaterials.length} materiales</p>
-          </div>
-          <div className="materials-header-actions">
-            <Button variant="ghost" icon={FileDown} onClick={handleExportPDF}>
-              Exportar PDF
-            </Button>
-            {(isAdmin || isEmployee) && (
-              <Button variant="primary" icon={Plus} onClick={handleNewMaterial}>
-                Nuevo Material
+      <div className="page materials">
+        <PageHeader
+          title="Inventario"
+          subtitle={
+            hasFilters
+              ? `${filtered.length} de ${materials.length} materiales`
+              : `${materials.length} materiales registrados`
+          }
+          actions={
+            <>
+              {canCreate && (
+                <Button variant="secondary" icon={Upload} onClick={() => setShowImport(true)}>
+                  Importar
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                icon={QrCode}
+                onClick={() =>
+                  filtered.length
+                    ? setShowLabels(true)
+                    : toast.error("No hay materiales para etiquetar")
+                }
+              >
+                Etiquetas
               </Button>
-            )}
-          </div>
-        </div>
+              <Button variant="secondary" icon={FileSpreadsheet} onClick={handleExportExcel}>
+                Excel
+              </Button>
+              <Button variant="secondary" icon={FileDown} onClick={handleExportPDF}>
+                PDF
+              </Button>
+              {canCreate && (
+                <Button icon={Plus} onClick={() => setFormTarget("new")}>
+                  Nuevo material
+                </Button>
+              )}
+            </>
+          }
+        />
 
-        <div className="materials-filters">
-          <div className="search-box">
-            <Input
-              placeholder="Buscar por nombre, código o subcategoría..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              icon={Search}
-            />
-          </div>
-
+        <div className="toolbar">
+          <Input
+            className="grow"
+            name="search"
+            placeholder="Buscar por nombre, código, categoría, ubicación..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            icon={Search}
+            aria-label="Buscar materiales"
+            suffix={
+              search ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={X}
+                  onClick={() => setSearch("")}
+                  aria-label="Limpiar búsqueda"
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={ScanLine}
+                  onClick={() => setShowScanner(true)}
+                  aria-label="Buscar por código de barras"
+                  title="Escanear código"
+                />
+              )
+            }
+          />
           <select
             className="input"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            aria-label="Filtrar por categoría"
           >
             <option value="all">Todas las categorías</option>
-            {categories.map((cat) => (
-              <option key={cat.key} value={cat.key}>
-                {cat.label}
+            {categories.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.label}
               </option>
             ))}
           </select>
-
           <select
             className="input"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            aria-label="Filtrar por estado"
           >
             <option value="all">Todos los estados</option>
             {Object.entries(STATUS_LABELS).map(([key, label]) => (
@@ -389,382 +417,253 @@ const Materiales = () => {
               </option>
             ))}
           </select>
-
-          <div className="view-toggle">
+          <select
+            className="input"
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            aria-label="Filtrar por stock"
+          >
+            {Object.entries(STOCK_FILTERS).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            aria-label="Ordenar"
+          >
+            {Object.entries(SORTS).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <div className="btn-group" role="group" aria-label="Vista">
             <Button
-              variant={viewMode === "grid" ? "primary" : "ghost"}
-              icon={Grid}
+              variant="ghost"
+              icon={LayoutGrid}
+              className={viewMode === "grid" ? "is-active" : ""}
               onClick={() => setViewMode("grid")}
+              aria-label="Vista en tarjetas"
+              aria-pressed={viewMode === "grid"}
             />
             <Button
-              variant={viewMode === "list" ? "primary" : "ghost"}
+              variant="ghost"
               icon={List}
+              className={viewMode === "list" ? "is-active" : ""}
               onClick={() => setViewMode("list")}
+              aria-label="Vista en lista"
+              aria-pressed={viewMode === "list"}
             />
           </div>
         </div>
 
-        {filteredMaterials.length === 0 ? (
-          <Card>
-            <p className="empty-state">No se encontraron materiales</p>
-          </Card>
-        ) : (
-          <div className={`materials-${viewMode}`}>
-            {filteredMaterials.map((material) => (
-              <Card key={material.id} className="material-card" hover>
-                <div className="material-header">
-                  <div>
-                    <h3>{material.name}</h3>
-                    <p className="material-code">{material.code}</p>
-                  </div>
-                  <Badge variant={material.status}>
-                    {STATUS_LABELS[material.status]}
-                  </Badge>
-                </div>
-
-                <div className="material-info">
-                  <div className="material-info-item">
-                    <span className="label">Categoría:</span>
-                    <span>
-                      {categories.find((c) => c.key === material.category)
-                        ?.label || material.category}
-                    </span>
-                  </div>
-                  {material.subcategory && (
-                    <div className="material-info-item">
-                      <span className="label">Subcategoría:</span>
-                      <span>{material.subcategory}</span>
+        {materials.length === 0 ? (
+          <EmptyState
+            icon={Package}
+            title="Todavía no hay materiales"
+            description="Crea el primer material para empezar a controlar el stock."
+            action={
+              canCreate && (
+                <Button icon={Plus} onClick={() => setFormTarget("new")}>
+                  Nuevo material
+                </Button>
+              )
+            }
+          />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={SearchX}
+            title="Sin resultados"
+            description="Ningún material coincide con los filtros aplicados."
+            action={
+              <Button variant="secondary" onClick={clearFilters}>
+                Limpiar filtros
+              </Button>
+            }
+          />
+        ) : viewMode === "grid" ? (
+          <div className="materials-grid">
+            {shown.map((m) => {
+              const s = getStock(m);
+              const level = getStockLevel(m);
+              return (
+                <article
+                  key={m.id}
+                  className="material-card"
+                  tabIndex={0}
+                  role="button"
+                  onClick={() => openDetail(m.id)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && e.target === e.currentTarget && openDetail(m.id)
+                  }
+                >
+                  <MaterialMedia material={m} />
+                  <div className="material-body">
+                    <div className="material-title-row">
+                      <div className="material-title">
+                        <h3>{m.name}</h3>
+                        <span className="mono">{m.code}</span>
+                      </div>
+                      {renderActions(m)}
                     </div>
-                  )}
-                  <div className="material-info-item">
-                    <span className="label">Ubicación:</span>
-                    <span>{material.location}</span>
+                    <div className="material-badges">
+                      <Badge size="sm" variant={m.status} dot>
+                        {STATUS_LABELS[m.status] || m.status}
+                      </Badge>
+                    </div>
+                    <p className="material-meta">
+                      {getLabel(m.category)}
+                      {m.subcategory && ` · ${m.subcategory}`}
+                    </p>
+                    <p className="material-meta">
+                      <MapPin size={12} /> {m.location || "—"}
+                    </p>
+                    <div className="material-stock">
+                      <div className={`material-stock-main level-${level}`}>
+                        <span className="material-stock-value">{s.available}</span>
+                        <span className="material-stock-label">{STOCK_LEVEL_LABELS[level]}</span>
+                      </div>
+                      <div className="material-stock-side">
+                        <span>
+                          En uso <strong>{s.committed}</strong>
+                        </span>
+                        <span>
+                          Mant. <strong>{s.maintenance}</strong>
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="material-info-item">
-                    <span className="label">Disponible:</span>
-                    <span className="quantity-highlight">
-                      {material.quantity || 0}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="material-actions">
-                  {/* Solo admin puede editar */}
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={Edit}
-                      onClick={() => handleEdit(material)}
-                    >
-                      Editar
-                    </Button>
-                  )}
-
-                  {/* Employee no puede editar */}
-                  {isEmployee && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={Edit}
-                      onClick={() =>
-                        toast.info(
-                          "⚠️ Solo los administradores pueden editar materiales"
-                        )
-                      }
-                    >
-                      Editar
-                    </Button>
-                  )}
-
-                  {/* Solo admin puede eliminar */}
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={() => handleDelete(material.id)}
-                    >
-                      Eliminar
-                    </Button>
-                  )}
-
-                  {/* Employee y User no pueden eliminar */}
-                  {(isEmployee || isUser) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={() =>
-                        toast.info(
-                          "⚠️ Solo los administradores pueden eliminar materiales"
-                        )
-                      }
-                    >
-                      Eliminar
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            ))}
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table className="table materials-table">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Categoría</th>
+                  <th>Ubicación</th>
+                  <th>Estado</th>
+                  <th className="num">Disp.</th>
+                  <th className="num">En uso</th>
+                  <th className="num">Mant.</th>
+                  {isAdmin && <th aria-label="Acciones" />}
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((m) => {
+                  const s = getStock(m);
+                  const level = getStockLevel(m);
+                  return (
+                    <tr key={m.id} className="clickable" onClick={() => openDetail(m.id)}>
+                      <td>
+                        <div className="material-cell">
+                          <MaterialThumb material={m} />
+                          <span>
+                            <span className="cell-title">{m.name}</span>
+                            <span className="cell-sub mono">{m.code}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td>{getLabel(m.category)}</td>
+                      <td className="text-secondary">{m.location || "—"}</td>
+                      <td>
+                        <Badge size="sm" variant={m.status}>
+                          {STATUS_LABELS[m.status] || m.status}
+                        </Badge>
+                      </td>
+                      <td className="num">
+                        <Badge size="sm" variant={LEVEL_VARIANT[level]}>
+                          {s.available}
+                        </Badge>
+                      </td>
+                      <td className="num">{s.committed}</td>
+                      <td className="num">{s.maintenance}</td>
+                      {isAdmin && <td className="num">{renderActions(m)}</td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* Material Modal */}
-        <Modal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            resetForm();
-          }}
-          title={editingMaterial ? "Editar Material" : "Nuevo Material"}
-          size="lg"
-        >
-          <form onSubmit={handleSubmit} className="material-form">
-            {/* Sección: Información Básica */}
-            <div className="form-section">
-              <h3 className="form-section-title">Información Básica</h3>
-              <div className="form-row">
-                <div className="form-col-full">
-                  <Input
-                    label="Nombre"
-                    name="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-              </div>
+        {filtered.length > visible && (
+          <div className="load-more">
+            <Button variant="secondary" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
+              Mostrar más ({filtered.length - visible} restantes)
+            </Button>
+          </div>
+        )}
 
-              <div className="form-row">
-                <div className="form-col-2">
-                  <Input
-                    label="Código"
-                    name="code"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-col-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    icon={Camera}
-                    onClick={() => setShowScanner(true)}
-                    title="Escanear código de barras"
-                    className="scanner-button"
-                  >
-                    Escanear
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Sección: Clasificación */}
-            <div className="form-section">
-              <h3 className="form-section-title">Clasificación</h3>
-              <div className="form-row">
-                <div className="form-col-2">
-                  <div className="input-group">
-                    <label className="input-label">Categoría *</label>
-                    <select
-                      className="input"
-                      value={formData.category}
-                      onChange={(e) =>
-                        setFormData({ ...formData, category: e.target.value })
-                      }
-                      required
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat.key} value={cat.key}>
-                          {cat.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="form-col-2">
-                  <Input
-                    label="Subcategoría"
-                    name="subcategory"
-                    value={formData.subcategory}
-                    onChange={(e) =>
-                      setFormData({ ...formData, subcategory: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sección: Cantidades */}
-            <div className="form-section">
-              <h3 className="form-section-title">Inventario</h3>
-              <div className="form-row">
-                <div className="form-col-3">
-                  <Input
-                    label="Cantidad Disponible"
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        quantity: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    min="0"
-                  />
-                </div>
-                <div className="form-col-3">
-                  <Input
-                    label="Cantidad Comprometida"
-                    type="number"
-                    name="quantityCommitted"
-                    value={formData.quantityCommitted}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        quantityCommitted: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    min="0"
-                  />
-                </div>
-                <div className="form-col-3">
-                  <Input
-                    label="En Mantenimiento"
-                    type="number"
-                    name="quantityMaintenance"
-                    value={formData.quantityMaintenance}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        quantityMaintenance: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    min="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sección: Estado y Ubicación */}
-            <div className="form-section">
-              <h3 className="form-section-title">Estado y Ubicación</h3>
-              <div className="form-row">
-                <div className="form-col-2">
-                  <Input
-                    label="Ubicación"
-                    name="location"
-                    value={formData.location}
-                    onChange={(e) =>
-                      setFormData({ ...formData, location: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="form-col-2">
-                  <div className="input-group">
-                    <label className="input-label">Estado</label>
-                    <select
-                      className="input"
-                      value={formData.status}
-                      onChange={(e) =>
-                        setFormData({ ...formData, status: e.target.value })
-                      }
-                    >
-                      {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sección: Imagen */}
-            <div className="form-section">
-              <h3 className="form-section-title">Imagen del Material</h3>
-              <ImageUploadWidget
-                materialId={editingMaterial?.id || "new"}
-                currentImageUrl={formData.imageUrl}
-                onImageUpload={(url, path) => {
-                  setFormData({
-                    ...formData,
-                    imageUrl: url,
-                    imagePath: path,
-                  });
-                }}
-                onImageRemove={() => {
-                  setFormData({
-                    ...formData,
-                    imageUrl: "",
-                    imagePath: "",
-                  });
-                }}
-                disabled={isGuest}
-              />
-              {isGuest && (
-                <p
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--c-warning)",
-                    marginTop: "var(--spacing-sm)",
-                    textAlign: "center",
-                  }}
-                >
-                  📷 Subida de imágenes no disponible en modo demostración
-                </p>
-              )}
-            </div>
-
-            {/* Sección: Observaciones */}
-            <div className="form-section">
-              <h3 className="form-section-title">Observaciones</h3>
-              <Input
-                label="Notas adicionales"
-                type="textarea"
-                name="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
-                rows={3}
-              />
-            </div>
-
-            <div className="modal-footer">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setShowModal(false);
-                  resetForm();
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary">
-                {editingMaterial ? "Actualizar" : "Crear"} Material
-              </Button>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Barcode Scanner */}
-        {showScanner && (
-          <BarcodeScanner
-            onScan={handleBarcodeScanned}
-            onClose={() => setShowScanner(false)}
-          />
+        {isGuest && (
+          <p className="materials-readonly">
+            Estás en modo sólo lectura. Pide a un administrador permisos para editar.
+          </p>
         )}
       </div>
+
+      {formTarget && (
+        <MaterialForm
+          material={formTarget === "new" ? null : formTarget}
+          materials={materials}
+          categories={categories}
+          onClose={() => setFormTarget(null)}
+        />
+      )}
+
+      {detailMaterial && !formTarget && (
+        <MaterialDetail
+          material={detailMaterial}
+          categoryLabel={getLabel(detailMaterial.category)}
+          onClose={closeDetail}
+          onEdit={() => setFormTarget(detailMaterial)}
+        />
+      )}
+
+      {showLabels && (
+        <LabelsDialog
+          materials={filtered}
+          getCategoryLabel={getLabel}
+          onClose={() => setShowLabels(false)}
+        />
+      )}
+
+      {showImport && (
+        <ImportDialog
+          materials={materials}
+          categories={categories}
+          onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {showScanner && (
+        <BarcodeScanner
+          title="Buscar por código"
+          onScan={handleScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={Boolean(toDelete)}
+        title="Eliminar material"
+        message={
+          <>
+            Se eliminará <strong>{toDelete?.name}</strong> ({toDelete?.code}) del inventario. Los
+            movimientos registrados se conservan en el historial. Esta acción no se puede deshacer.
+          </>
+        }
+        confirmLabel="Eliminar"
+        onConfirm={handleDelete}
+        onCancel={() => setToDelete(null)}
+      />
     </Layout>
   );
 };

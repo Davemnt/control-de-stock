@@ -1,433 +1,307 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Plus,
   Search,
-  TrendingUp,
-  TrendingDown,
-  ArrowRightLeft,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowLeftRight,
+  Undo2,
+  Wrench,
+  CheckCircle2,
+  PackageMinus,
+  PackageCheck,
+  SearchX,
+  X,
 } from "lucide-react";
-import {
-  collection,
-  query,
-  getDocs,
-  addDoc,
-  doc,
-  getDoc,
-  updateDoc,
-  serverTimestamp,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
-import { COLLECTIONS, MOVEMENT_TYPES, MOVEMENT_LABELS } from "../../constants";
-import { formatDateTime } from "../../utils/formatters";
+import { useMaterials, useMovements } from "../../hooks/useFirestore";
+import { MOVEMENT_LABELS, MOVEMENT_TYPES } from "../../constants";
+import { formatDateTime, formatRelativeTime } from "../../utils/formatters";
+import {
+  getMovementDirection,
+  getMovementUser,
+  getMovementVariant,
+  normalize,
+  toDate,
+} from "../../utils/stock";
 import Layout from "../../components/Layout/Layout";
-import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Badge from "../../components/Badge/Badge";
-import Modal from "../../components/Modal/Modal";
-import toast from "react-hot-toast";
+import PageHeader from "../../components/PageHeader/PageHeader";
+import EmptyState from "../../components/EmptyState/EmptyState";
+import Loader from "../../components/Loader/Loader";
+import MovementForm from "./MovementForm";
+import EventBatch from "./EventBatch";
+import MovementDetail from "../../components/MovementDetail/MovementDetail";
 import "./Movimientos.css";
 
+const RECENT_LIMIT = 100;
+const DIRECTION_ICONS = { in: ArrowDownLeft, out: ArrowUpRight, neutral: ArrowLeftRight };
+
+const QUICK_ACTIONS = [
+  { type: MOVEMENT_TYPES.SALIDA, icon: ArrowUpRight, tone: "warning", hint: "A evento o préstamo" },
+  { type: MOVEMENT_TYPES.DEVOLUCION, icon: Undo2, tone: "success", hint: "Vuelve al depósito" },
+  { type: MOVEMENT_TYPES.ENTRADA, icon: ArrowDownLeft, tone: "success", hint: "Compra o alta" },
+  { type: MOVEMENT_TYPES.REPARACION, icon: Wrench, tone: "info", hint: "Al servicio técnico" },
+  { type: MOVEMENT_TYPES.REPARADO, icon: CheckCircle2, tone: "info", hint: "Vuelve reparado" },
+  { type: MOVEMENT_TYPES.TRANSFERENCIA, icon: ArrowLeftRight, tone: "neutral", hint: "Cambio de ubicación" },
+];
+
 const Movimientos = () => {
-  const { userData, isAdmin, isUser, isEmployee, currentUser } = useAuth();
-  const [movements, setMovements] = useState([]);
-  const [materials, setMaterials] = useState([]);
-  const [filteredMovements, setFilteredMovements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    materialId: "",
-    type: MOVEMENT_TYPES.ENTRADA,
-    quantity: 0,
-    reason: "",
-    project: "",
-    notes: "",
-  });
+  const { isGuest } = useAuth();
+  const { materials, loading: loadingMaterials } = useMaterials();
+  const { movements, loading: loadingMovements } = useMovements(RECENT_LIMIT);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const formOpen = searchParams.get("nuevo") === "1";
 
-  useEffect(() => {
-    filterMovements();
-  }, [movements, searchTerm]);
-
-  const loadData = async () => {
-    try {
-      // Load materials
-      const materialsSnapshot = await getDocs(
-        collection(db, COLLECTIONS.MATERIALS)
-      );
-      const materialsData = materialsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMaterials(materialsData);
-
-      // Load movements
-      const movementsQuery = query(
-        collection(db, COLLECTIONS.MOVEMENTS),
-        orderBy("createdAt", "desc")
-      );
-      const movementsSnapshot = await getDocs(movementsQuery);
-      const movementsData = movementsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMovements(movementsData);
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Error al cargar datos");
-    } finally {
-      setLoading(false);
-    }
+  const openForm = (type) => {
+    const next = new URLSearchParams();
+    next.set("nuevo", "1");
+    if (type) next.set("tipo", type);
+    setSearchParams(next);
   };
 
-  const filterMovements = () => {
-    let filtered = [...movements];
+  const closeForm = () => setSearchParams({}, { replace: true });
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (mov) =>
-          mov.materialName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mov.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mov.project?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+  // Eventos en lote: ?lote=salida | ?lote=devolucion&evento=...
+  const batchMode = { salida: "out", devolucion: "return" }[searchParams.get("lote")];
+  const openBatch = (lote) => setSearchParams({ lote });
 
-    setFilteredMovements(filtered);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.materialId || !formData.quantity || formData.quantity <= 0) {
-      toast.error("Completa todos los campos requeridos");
-      return;
-    }
-
-    try {
-      const materialDoc = await getDoc(
-        doc(db, COLLECTIONS.MATERIALS, formData.materialId)
-      );
-      if (!materialDoc.exists()) {
-        toast.error("Material no encontrado");
-        return;
-      }
-
-      const material = materialDoc.data();
-      let newQuantity = material.quantity || 0;
-
-      // Calculate new quantity based on movement type
-      if (
-        formData.type === MOVEMENT_TYPES.ENTRADA ||
-        formData.type === MOVEMENT_TYPES.DEVOLUCION
-      ) {
-        newQuantity += parseInt(formData.quantity);
-      } else if (formData.type === MOVEMENT_TYPES.SALIDA) {
-        if (newQuantity < parseInt(formData.quantity)) {
-          toast.error("Stock insuficiente");
-          return;
-        }
-        newQuantity -= parseInt(formData.quantity);
-      }
-
-      // Create movement
-      const movementData = {
-        materialId: formData.materialId,
-        materialName: material.name,
-        materialCode: material.code || "",
-        type: formData.type,
-        quantity: parseInt(formData.quantity),
-        reason: formData.reason,
-        project: formData.project || "",
-        notes: formData.notes || "",
-        previousQuantity: material.quantity || 0,
-        newQuantity: newQuantity,
-        createdAt: serverTimestamp(),
-        createdBy: currentUser?.uid || userData?.uid || "unknown",
-        createdByName: userData?.name || "Usuario",
-        fromLocation: material.location || "Sin ubicación",
-        toLocation: material.location || "Sin ubicación",
-      };
-
-      await addDoc(collection(db, COLLECTIONS.MOVEMENTS), movementData);
-
-      // Update material quantity
-      await updateDoc(doc(db, COLLECTIONS.MATERIALS, formData.materialId), {
-        quantity: newQuantity,
-        updatedAt: serverTimestamp(),
-      });
-
-      toast.success("Movimiento registrado");
-      setShowModal(false);
-      resetForm();
-      loadData();
-    } catch (error) {
-      console.error("Error creating movement:", error);
-      toast.error("Error al registrar movimiento");
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      materialId: "",
-      type: MOVEMENT_TYPES.ENTRADA,
-      quantity: 0,
-      reason: "",
-      project: "",
-      notes: "",
+  const filtered = useMemo(() => {
+    const term = normalize(search.trim());
+    return movements.filter((mv) => {
+      if (typeFilter !== "all" && mv.type !== typeFilter) return false;
+      if (!term) return true;
+      return normalize(
+        [mv.materialName, mv.materialCode, mv.reason, mv.project, getMovementUser(mv)].join(" ")
+      ).includes(term);
     });
-  };
+  }, [movements, search, typeFilter]);
 
-  const getMovementIcon = (type) => {
-    switch (type) {
-      case MOVEMENT_TYPES.ENTRADA:
-      case MOVEMENT_TYPES.DEVOLUCION:
-        return TrendingUp;
-      case MOVEMENT_TYPES.SALIDA:
-        return TrendingDown;
-      default:
-        return ArrowRightLeft;
-    }
-  };
-
-  const getMovementColor = (type) => {
-    switch (type) {
-      case MOVEMENT_TYPES.ENTRADA:
-      case MOVEMENT_TYPES.DEVOLUCION:
-        return "success";
-      case MOVEMENT_TYPES.SALIDA:
-        return "warning";
-      default:
-        return "info";
-    }
-  };
-
-  if (loading) {
+  if (loadingMaterials || loadingMovements) {
     return (
       <Layout>
-        <div className="movements-loading">
-          <div className="spinner"></div>
-          <p>Cargando movimientos...</p>
-        </div>
+        <Loader text="Cargando movimientos..." />
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="movements">
-        <div className="movements-header">
-          <div>
-            <h1>Movimientos de Stock</h1>
-            <p>{filteredMovements.length} movimientos registrados</p>
-          </div>
-          {(isAdmin || isUser || isEmployee) && (
-            <Button
-              variant="primary"
-              icon={Plus}
-              onClick={() => setShowModal(true)}
-            >
-              Registrar Movimiento
-            </Button>
-          )}
-        </div>
+      <div className="page movements">
+        <PageHeader
+          title="Movimientos"
+          subtitle="Registra entradas, salidas, devoluciones y reparaciones"
+          actions={
+            !isGuest && (
+              <Button icon={Plus} onClick={() => openForm()}>
+                Registrar movimiento
+              </Button>
+            )
+          }
+        />
 
-        <div className="movements-filters">
-          <Input
-            placeholder="Buscar por material, motivo o proyecto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon={Search}
-          />
-        </div>
-
-        {filteredMovements.length === 0 ? (
-          <Card>
-            <p className="empty-state">No se encontraron movimientos</p>
-          </Card>
-        ) : (
-          <div className="movements-list">
-            {filteredMovements.map((movement) => {
-              const Icon = getMovementIcon(movement.type);
-              const color = getMovementColor(movement.type);
-
-              return (
-                <Card key={movement.id} className="movement-card" hover>
-                  <div className="movement-header">
-                    <div className="movement-icon" data-color={color}>
-                      <Icon size={24} />
-                    </div>
-                    <div className="movement-main">
-                      <h3>{movement.materialName}</h3>
-                      <p className="movement-code">{movement.materialCode}</p>
-                    </div>
-                    <Badge variant={color}>
-                      {MOVEMENT_LABELS[movement.type]}
-                    </Badge>
-                  </div>
-
-                  <div className="movement-details">
-                    <div className="movement-detail-item">
-                      <span className="label">Cantidad:</span>
-                      <span className="value">
-                        {movement.quantity} unidades
-                      </span>
-                    </div>
-                    <div className="movement-detail-item">
-                      <span className="label">Stock anterior:</span>
-                      <span className="value">{movement.previousQuantity}</span>
-                    </div>
-                    <div className="movement-detail-item">
-                      <span className="label">Stock nuevo:</span>
-                      <span className="value highlight">
-                        {movement.newQuantity}
-                      </span>
-                    </div>
-                    {movement.reason && (
-                      <div className="movement-detail-item">
-                        <span className="label">Motivo:</span>
-                        <span className="value">{movement.reason}</span>
-                      </div>
-                    )}
-                    {movement.project && (
-                      <div className="movement-detail-item">
-                        <span className="label">Proyecto:</span>
-                        <span className="value">{movement.project}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="movement-footer">
-                    <p className="movement-user">
-                      {movement.userName || "Usuario"}
-                    </p>
-                    <p className="movement-date">
-                      {formatDateTime(
-                        movement.createdAt?.toDate?.() || new Date()
-                      )}
-                    </p>
-                  </div>
-                </Card>
-              );
-            })}
+        {!isGuest && (
+          <div className="event-actions">
+            <button type="button" className="quick-action event-action" onClick={() => openBatch("salida")}>
+              <span className="quick-action-icon">
+                <PackageMinus size={18} />
+              </span>
+              <span className="quick-action-text">
+                <strong>Salida a evento</strong>
+                <span>Varios equipos de una vez, escaneando o buscando</span>
+              </span>
+            </button>
+            <button type="button" className="quick-action event-action" onClick={() => openBatch("devolucion")}>
+              <span className="quick-action-icon">
+                <PackageCheck size={18} />
+              </span>
+              <span className="quick-action-text">
+                <strong>Devolución de evento</strong>
+                <span>Marca lo que volvió de cada evento</span>
+              </span>
+            </button>
           </div>
         )}
 
-        {/* Movement Modal */}
-        <Modal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            resetForm();
-          }}
-          title="Registrar Movimiento"
-          size="md"
-        >
-          <form onSubmit={handleSubmit} className="movement-form">
-            <div className="input-group">
-              <label className="input-label">Material *</label>
-              <select
-                className="input"
-                value={formData.materialId}
-                onChange={(e) =>
-                  setFormData({ ...formData, materialId: e.target.value })
-                }
-                required
-              >
-                <option value="">Seleccionar material...</option>
-                {materials.map((mat) => (
-                  <option key={mat.id} value={mat.id}>
-                    {mat.name} ({mat.code}) - Stock: {mat.quantity}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">Tipo de Movimiento *</label>
-              <select
-                className="input"
-                value={formData.type}
-                onChange={(e) =>
-                  setFormData({ ...formData, type: e.target.value })
-                }
-                required
-              >
-                {Object.entries(MOVEMENT_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Input
-              label="Cantidad"
-              type="number"
-              name="quantity"
-              value={formData.quantity}
-              onChange={(e) =>
-                setFormData({ ...formData, quantity: e.target.value })
-              }
-              min="1"
-              required
-            />
-
-            <Input
-              label="Motivo"
-              name="reason"
-              value={formData.reason}
-              onChange={(e) =>
-                setFormData({ ...formData, reason: e.target.value })
-              }
-              placeholder="Ej: Evento corporativo, Mantenimiento preventivo..."
-              required
-            />
-
-            <Input
-              label="Proyecto / Evento"
-              name="project"
-              value={formData.project}
-              onChange={(e) =>
-                setFormData({ ...formData, project: e.target.value })
-              }
-              placeholder="Opcional"
-            />
-
-            <Input
-              label="Notas adicionales"
-              type="textarea"
-              name="notes"
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              rows={3}
-            />
-
-            <div className="modal-footer">
-              <Button
+        {!isGuest && (
+          <div className="quick-actions">
+            {QUICK_ACTIONS.map(({ type, icon: Icon, tone, hint }) => (
+              <button
+                key={type}
                 type="button"
-                variant="ghost"
-                onClick={() => {
-                  setShowModal(false);
-                  resetForm();
-                }}
+                className={`quick-action tone-${tone}`}
+                onClick={() => openForm(type)}
               >
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary">
-                Registrar Movimiento
-              </Button>
-            </div>
-          </form>
-        </Modal>
+                <span className="quick-action-icon">
+                  <Icon size={18} />
+                </span>
+                <span className="quick-action-text">
+                  <strong>{MOVEMENT_LABELS[type]}</strong>
+                  <span>{hint}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <section className="movements-section">
+          <div className="movements-section-head">
+            <h2>Últimos movimientos</h2>
+            <span className="text-muted">
+              Mostrando los {RECENT_LIMIT} más recientes · consulta todo en Historial
+            </span>
+          </div>
+
+          <div className="toolbar">
+            <Input
+              className="grow"
+              name="search"
+              placeholder="Buscar material, motivo, proyecto o usuario..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              icon={Search}
+              aria-label="Buscar movimientos"
+              suffix={
+                search && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={X}
+                    onClick={() => setSearch("")}
+                    aria-label="Limpiar búsqueda"
+                  />
+                )
+              }
+            />
+          </div>
+
+          <div className="chips" role="group" aria-label="Filtrar por tipo">
+            {["all", ...Object.keys(MOVEMENT_LABELS)].map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={`chip ${typeFilter === t ? "is-active" : ""}`}
+                onClick={() => setTypeFilter(t)}
+                aria-pressed={typeFilter === t}
+              >
+                {t === "all" ? "Todos" : MOVEMENT_LABELS[t]}
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={movements.length ? SearchX : ArrowLeftRight}
+              title={movements.length ? "Sin resultados" : "Aún no hay movimientos"}
+              description={
+                movements.length
+                  ? "Prueba con otra búsqueda o tipo."
+                  : "Registra el primero con los accesos rápidos de arriba."
+              }
+            />
+          ) : (
+            <ul className="timeline">
+              {filtered.map((mv) => {
+                const dir = getMovementDirection(mv.type);
+                const Icon = DIRECTION_ICONS[dir];
+                const date = toDate(mv.createdAt);
+                const isTransfer = mv.type === MOVEMENT_TYPES.TRANSFERENCIA;
+                return (
+                  <li
+                    key={mv.id}
+                    className={`timeline-item clickable ${mv.voided ? "is-voided" : ""}`}
+                    onClick={() => setSelectedId(mv.id)}
+                    onKeyDown={(e) => e.key === "Enter" && setSelectedId(mv.id)}
+                    tabIndex={0}
+                    role="button"
+                  >
+                    <span className={`timeline-icon dir-${dir}`}>
+                      <Icon size={16} />
+                    </span>
+                    <div className="timeline-body">
+                      <div className="timeline-top">
+                        <span className="timeline-title">{mv.materialName}</span>
+                        <Badge size="sm" variant={getMovementVariant(mv.type)}>
+                          {MOVEMENT_LABELS[mv.type] || mv.type}
+                        </Badge>
+                        {mv.voided && (
+                          <Badge size="sm" variant="error">
+                            Anulado
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="timeline-sub">
+                        <span className="mono">{mv.materialCode}</span>
+                        {mv.reason && ` · ${mv.reason}`}
+                        {mv.project && ` · ${mv.project}`}
+                      </p>
+                      <p className="timeline-meta">
+                        {getMovementUser(mv)}
+                        {date && (
+                          <time dateTime={date.toISOString()} title={formatDateTime(date)}>
+                            {" · "}
+                            {formatRelativeTime(date)}
+                          </time>
+                        )}
+                      </p>
+                    </div>
+                    <div className="timeline-qty">
+                      {isTransfer ? (
+                        <span className="timeline-transfer">
+                          {mv.fromLocation} → {mv.toLocation}
+                        </span>
+                      ) : (
+                        <>
+                          <span className={`qty dir-${dir}`}>
+                            {mv.type === MOVEMENT_TYPES.AJUSTE
+                              ? `= ${mv.quantity}`
+                              : `${dir === "in" ? "+" : dir === "out" ? "−" : ""}${mv.quantity}`}
+                          </span>
+                          <span className="timeline-stock">
+                            {mv.previousQuantity} → {mv.newQuantity}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       </div>
+
+      {selectedId && movements.find((m) => m.id === selectedId) && (
+        <MovementDetail
+          movement={movements.find((m) => m.id === selectedId)}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
+
+      {batchMode && !isGuest && (
+        <EventBatch
+          mode={batchMode}
+          materials={materials}
+          initialEvent={searchParams.get("evento") || ""}
+          onClose={closeForm}
+        />
+      )}
+
+      {formOpen && !isGuest && (
+        <MovementForm
+          materials={materials}
+          initialMaterialId={searchParams.get("material")}
+          initialType={searchParams.get("tipo")}
+          onClose={closeForm}
+        />
+      )}
     </Layout>
   );
 };

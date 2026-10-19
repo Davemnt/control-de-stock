@@ -55,25 +55,24 @@ try {
           <App />
           <Toaster
             position="top-right"
+            gutter={8}
             toastOptions={{
               duration: 4000,
               style: {
-                background: "var(--c-surface, #ffffff)",
-                color: "var(--c-text, #000000)",
-                border: "1px solid var(--c-border, #e0e0e0)",
-                fontFamily: "var(--font-base, Arial, sans-serif)",
+                background: "var(--c-surface)",
+                color: "var(--c-text)",
+                border: "1px solid var(--c-border-strong)",
+                boxShadow: "var(--shadow-lg)",
+                fontFamily: "var(--font-base)",
+                fontSize: "0.875rem",
+                borderRadius: "10px",
               },
               success: {
-                iconTheme: {
-                  primary: "var(--c-success, #4CAF50)",
-                  secondary: "var(--c-white, #ffffff)",
-                },
+                iconTheme: { primary: "var(--c-success)", secondary: "#fff" },
               },
               error: {
-                iconTheme: {
-                  primary: "var(--c-error, #f44336)",
-                  secondary: "var(--c-white, #ffffff)",
-                },
+                duration: 5000,
+                iconTheme: { primary: "var(--c-error)", secondary: "#fff" },
               },
             }}
           />

@@ -1,83 +1,47 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-family: var(--font-bold);
+  gap: 0.35rem;
+  font-family: var(--font-base);
   font-weight: 600;
-  border-radius: var(--radius-md);
+  line-height: 1.2;
+  border-radius: var(--radius-full);
   white-space: nowrap;
+  background-color: var(--c-surface-hover);
+  color: var(--c-text-secondary);
 }
 
-/* Sizes */
 .badge-sm {
-  padding: 2px 8px;
-  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.6875rem;
 }
 
 .badge-md {
-  padding: 4px 12px;
-  font-size: 0.875rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
 }
 
 .badge-lg {
-  padding: 6px 16px;
-  font-size: 1rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8125rem;
 }
 
-/* Variants */
-.badge-default {
-  background-color: var(--c-surface-light);
-  color: var(--c-text);
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
-.badge-primary {
-  background-color: var(--c-brand);
-  color: var(--c-white);
-}
-
-.badge-success {
-  background-color: var(--c-success);
-  color: var(--c-dark);
-}
-
-.badge-warning {
-  background-color: var(--c-warning);
-  color: var(--c-dark);
-}
-
-.badge-error {
-  background-color: var(--c-error);
-  color: var(--c-white);
-}
-
-.badge-info {
-  background-color: var(--c-info);
-  color: var(--c-white);
-}
-
-/* Status badges */
-.badge-operativo {
-  background-color: var(--c-success);
-  color: var(--c-dark);
-}
-
-.badge-mantenimiento {
-  background-color: var(--c-warning);
-  color: var(--c-dark);
-}
-
-.badge-prestado {
-  background-color: var(--c-info);
-  color: var(--c-white);
-}
-
-.badge-reservado {
-  background-color: #8b5cf6;
-  color: var(--c-white);
-}
-
+.badge-primary { background-color: var(--c-brand-soft); color: var(--c-brand); }
+.badge-success,
+.badge-operativo { background-color: var(--c-success-soft); color: var(--c-success); }
+.badge-warning,
+.badge-mantenimiento { background-color: var(--c-warning-soft); color: var(--c-warning); }
+.badge-error,
 .badge-fuera_servicio,
-.badge-reparacion {
-  background-color: var(--c-error);
-  color: var(--c-white);
-}
+.badge-reparacion { background-color: var(--c-error-soft); color: var(--c-error); }
+.badge-info,
+.badge-prestado { background-color: var(--c-info-soft); color: var(--c-info); }
+.badge-purple,
+.badge-reservado { background-color: var(--c-purple-soft); color: var(--c-purple); }

@@ -6,8 +6,16 @@ import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import dotenv from "dotenv";
 import readline from "readline";
 
-// Cargar variables de entorno
-dotenv.config();
+// Cargar variables de entorno: `node scripts/createAdmin.mjs` usa .env;
+// `node scripts/createAdmin.mjs acme` usa .env.acme (instalación de un cliente)
+const client = process.argv[2];
+const envFile = client ? `.env.${client}` : ".env";
+const loaded = dotenv.config({ path: envFile });
+if (loaded.error) {
+  console.error(`No se encontró ${envFile}. Créalo con: npm run cliente:nuevo`);
+  process.exit(1);
+}
+console.log(`Proyecto Firebase: ${process.env.VITE_FIREBASE_PROJECT_ID} (${envFile})\n`);
 
 // Configuración de Firebase usando las variables de entorno de Vite
 const firebaseConfig = {
@@ -38,7 +46,7 @@ function askQuestion(question) {
   });
 }
 
-async function createRealAdmin() {
+async function createAdmin() {
   try {
     console.log("🔧 Configurando Firebase...");
     console.log("Project ID:", firebaseConfig.projectId);
@@ -116,7 +124,7 @@ async function createRealAdmin() {
 }
 
 // Ejecutar la función
-createRealAdmin()
+createAdmin()
   .then(() => {
     console.log("✨ Proceso completado");
     process.exit(0);

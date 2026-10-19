@@ -3,36 +3,43 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Sistema profesional de Control de Stock para productora técnica de eventos - Versión Producción",
+  "description": "Control de Stock: gestión de inventario para productoras técnicas de eventos",
   "scripts": {
     "dev": "vite --mode production",
     "build": "vite build --mode production",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "deploy": "npm run build && firebase use dave && firebase deploy --only hosting"
+    "deploy": "node scripts/deploy.mjs",
+    "cliente:nuevo": "node scripts/nuevoCliente.mjs",
+    "admin:crear": "node scripts/createAdmin.mjs"
   },
   "dependencies": {
     "date-fns": "^3.3.1",
     "dotenv": "^17.2.3",
-    "firebase": "^10.8.0",
+    "firebase": "^12.19.0",
     "html5-qrcode": "^2.3.8",
-    "jspdf": "^2.5.2",
-    "jspdf-autotable": "^3.8.4",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.344.0",
+    "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.22.0",
-    "xlsx": "^0.18.5"
+    "react-router-dom": "^7.18.4",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "vite": "^5.1.4"
+    "vite": "^6.4.3",
+    "vite-plugin-pwa": "^1.3.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.13.6"
   }
 }

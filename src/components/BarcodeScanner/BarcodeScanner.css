@@ -1,179 +1,71 @@
-.barcode-scanner-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: var(--z-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-md);
-}
-
-.barcode-scanner-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: var(--z-modal-backdrop);
-}
-
-.barcode-scanner-content {
-  position: relative;
-  z-index: var(--z-modal);
-  background-color: var(--c-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
+.scanner {
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.barcode-scanner-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--c-border);
-}
-
-.barcode-scanner-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: var(--c-text-cream);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  color: var(--c-text);
-  cursor: pointer;
-  padding: var(--spacing-xs);
-  border-radius: var(--radius-sm);
-  transition: var(--transition-fast);
-}
-
-.close-button:hover {
-  background-color: var(--c-surface-light);
-  color: var(--c-brand);
-}
-
-.barcode-scanner-body {
-  padding: var(--spacing-lg);
-  flex: 1;
-  overflow-y: auto;
-  position: relative;
+  gap: 1rem;
 }
 
 .scanner-viewport {
-  border-radius: var(--radius-md);
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background-color: var(--c-body);
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--c-surface-2);
+  border: 1px dashed var(--c-border-strong);
 }
 
 .scanner-viewport.active {
-  border: 2px solid var(--c-brand);
+  border-style: solid;
+  background: #000;
+}
+
+.scanner-viewport video {
+  width: 100% !important;
+  display: block;
 }
 
 .scanner-placeholder {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
-  color: var(--c-text);
-  opacity: 0.7;
-  padding: var(--spacing-xl);
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
   text-align: center;
-}
-
-.scanner-placeholder svg {
-  color: var(--c-brand);
-}
-
-.scanner-instructions {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-md);
-  background-color: var(--c-info);
-  color: white;
-  border-radius: var(--radius-md);
-  text-align: center;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  color: var(--c-text-muted);
+  font-size: 0.875rem;
 }
 
 .scanner-error {
-  padding: var(--spacing-md);
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--c-error);
-  border: 1px solid var(--c-error);
+  padding: 0.65rem 0.85rem;
   border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-md);
+  background: var(--c-error-soft);
+  color: var(--c-error);
+  font-size: 0.85rem;
 }
 
-.scanner-error p {
-  margin: 0;
-}
-
-.barcode-scanner-footer {
-  padding: var(--spacing-lg);
-  border-top: 1px solid var(--c-border);
+.scanner-actions {
   display: flex;
   justify-content: center;
-  gap: var(--spacing-md);
 }
 
-/* Estilos para html5-qrcode */
-#qr-reader {
-  width: 100%;
+.scanner-manual {
+  padding-top: 1rem;
+  border-top: 1px solid var(--c-border);
 }
 
-#qr-reader video {
-  border-radius: var(--radius-md);
+.scanner-manual-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+  margin-bottom: 0.5rem;
 }
 
-#qr-reader__dashboard_section_csr {
-  display: none !important;
-}
-
-@media (max-width: 768px) {
-  .barcode-scanner-content {
-    max-width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .scanner-viewport {
-    min-height: 250px;
-  }
+.scanner-manual-row {
+  display: flex;
+  gap: 0.5rem;
 }

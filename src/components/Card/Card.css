@@ -2,79 +2,64 @@
   background-color: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--radius-lg);
-  transition: all var(--transition-base);
-  height: 100%;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--c-brand);
+  border-color: var(--c-border-strong);
+  box-shadow: var(--shadow-md);
 }
 
-.card-padding-sm {
-  padding: var(--spacing-md);
+.card[role="button"] {
+  cursor: pointer;
 }
 
-.card-padding-md {
-  padding: var(--spacing-lg);
-}
-
-.card-padding-lg {
-  padding: var(--spacing-xl);
-}
+.card-padding-none { padding: 0; }
+.card-padding-sm { padding: var(--spacing-md); }
+.card-padding-md { padding: 1.25rem; }
+.card-padding-lg { padding: var(--spacing-xl); }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--c-border);
+}
+
+.card-padding-none > .card-header {
+  padding: 1.25rem 1.25rem 0;
 }
 
 .card-header-content {
   flex: 1;
+  min-width: 0;
 }
 
 .card-title {
-  font-family: var(--font-bold);
-  font-size: 1.25rem;
-  color: var(--c-text-cream);
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--c-text);
   margin: 0;
 }
 
 .card-subtitle {
-  font-size: 0.875rem;
-  color: var(--c-text);
-  opacity: 0.7;
-  margin: var(--spacing-xs) 0 0;
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+  margin-top: 0.15rem;
 }
 
 .card-actions {
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
+  flex-shrink: 0;
 }
 
 .card-body {
   flex: 1;
-}
-
-@media (max-width: 768px) {
-  .card-padding-lg {
-    padding: var(--spacing-lg);
-  }
-  
-  .card-header {
-    flex-direction: column;
-    gap: var(--spacing-md);
-  }
-  
-  .card-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
+  min-width: 0;
 }

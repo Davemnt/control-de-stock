@@ -6,6 +6,11 @@
 (function () {
   "use strict";
 
+  // En desarrollo local no se aplica ninguna protección (permite usar DevTools)
+  if (["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)) {
+    return;
+  }
+
   // ============================================
   // CONFIGURACIÓN
   // ============================================

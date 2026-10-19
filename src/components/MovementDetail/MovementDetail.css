@@ -1,0 +1,77 @@
+.mv-detail-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.mv-detail-alert {
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--c-error-soft);
+  color: var(--c-text);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.form-stack .mv-detail-alert {
+  margin-bottom: 0;
+}
+
+.mv-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.25rem;
+}
+
+.mv-detail-grid dt,
+.mv-detail-notes dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted);
+}
+
+.mv-detail-grid dd,
+.mv-detail-notes dd {
+  font-size: 0.9rem;
+  color: var(--c-text);
+  overflow-wrap: anywhere;
+}
+
+.mv-detail-notes {
+  margin-top: 1rem;
+}
+
+.mv-detail-notes dd {
+  white-space: pre-wrap;
+}
+
+.mv-detail-meta {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+}
+
+.form-stack .mv-detail-meta {
+  margin-top: 0;
+}
+
+/* Fila/elemento de un movimiento anulado */
+.is-voided .cell-title,
+.is-voided .timeline-title {
+  text-decoration: line-through;
+  color: var(--c-text-muted);
+}
+
+.is-voided td,
+.timeline-item.is-voided {
+  opacity: 0.7;
+}
+
+@media (max-width: 520px) {
+  .mv-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

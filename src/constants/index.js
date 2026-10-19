@@ -6,6 +6,32 @@ export const ROLES = {
   GUEST: "guest",
 };
 
+export const ROLE_LABELS = {
+  [ROLES.ADMIN]: "Administrador",
+  [ROLES.EMPLOYEE]: "Empleado",
+  [ROLES.USER]: "Encargado de stock",
+  [ROLES.GUEST]: "Invitado",
+};
+
+export const ROLE_DESCRIPTIONS = {
+  [ROLES.ADMIN]: "Acceso total: materiales, movimientos, usuarios y configuración",
+  [ROLES.EMPLOYEE]: "Crea materiales y registra movimientos",
+  [ROLES.USER]: "Registra entradas, salidas y devoluciones de material. No edita el inventario",
+  [ROLES.GUEST]: "Sólo lectura",
+};
+
+// Categorías por defecto (se usan si no existe system/categories)
+export const DEFAULT_CATEGORIES = [
+  { key: "Audio", label: "Audio" },
+  { key: "Iluminación", label: "Iluminación" },
+  { key: "Video", label: "Video" },
+  { key: "Rigging", label: "Rigging" },
+  { key: "Estructuras", label: "Estructuras" },
+  { key: "Cables", label: "Cables y Accesorios" },
+  { key: "Mochilas Técnicas", label: "Mochilas Técnicas" },
+  { key: "Repuestos", label: "Repuestos" },
+];
+
 // Material categories
 export const CATEGORIES = {
   AUDIO: "audio",
@@ -55,6 +81,7 @@ export const MOVEMENT_TYPES = {
   TRANSFERENCIA: "transferencia",
   DEVOLUCION: "devolucion",
   REPARACION: "reparacion",
+  REPARADO: "reparado",
   BAJA: "baja",
   AJUSTE: "ajuste",
 };
@@ -64,10 +91,26 @@ export const MOVEMENT_LABELS = {
   [MOVEMENT_TYPES.SALIDA]: "Salida",
   [MOVEMENT_TYPES.TRANSFERENCIA]: "Transferencia",
   [MOVEMENT_TYPES.DEVOLUCION]: "Devolución",
-  [MOVEMENT_TYPES.REPARACION]: "Reparación",
+  [MOVEMENT_TYPES.REPARACION]: "Envío a reparación",
+  [MOVEMENT_TYPES.REPARADO]: "Retorno de reparación",
   [MOVEMENT_TYPES.BAJA]: "Baja",
   [MOVEMENT_TYPES.AJUSTE]: "Ajuste Manual",
 };
+
+// Descripción de cómo afecta cada movimiento al stock
+export const MOVEMENT_HELP = {
+  [MOVEMENT_TYPES.ENTRADA]: "Suma unidades al stock disponible (compras, altas).",
+  [MOVEMENT_TYPES.SALIDA]: "Pasa unidades de disponible a «en uso» (eventos, préstamos).",
+  [MOVEMENT_TYPES.DEVOLUCION]: "Devuelve unidades «en uso» al stock disponible.",
+  [MOVEMENT_TYPES.REPARACION]: "Pasa unidades de disponible a «en mantenimiento».",
+  [MOVEMENT_TYPES.REPARADO]: "Devuelve unidades de mantenimiento al stock disponible.",
+  [MOVEMENT_TYPES.TRANSFERENCIA]: "Cambia la ubicación del material.",
+  [MOVEMENT_TYPES.BAJA]: "Descuenta unidades del stock definitivamente (rotura, pérdida).",
+  [MOVEMENT_TYPES.AJUSTE]: "Fija el stock disponible a la cantidad indicada (inventario físico).",
+};
+
+// Movimientos reservados a administradores
+export const ADMIN_ONLY_MOVEMENTS = [MOVEMENT_TYPES.BAJA, MOVEMENT_TYPES.AJUSTE];
 
 // Permissions by role
 export const PERMISSIONS = {

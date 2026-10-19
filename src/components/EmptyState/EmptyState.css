@@ -1,0 +1,49 @@
+.empty-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.empty-state-box.compact {
+  padding: 1.75rem 1rem;
+  border: none;
+  background: transparent;
+}
+
+.empty-state-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--c-surface-hover);
+  color: var(--c-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.compact .empty-state-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.empty-state-title {
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.empty-state-desc {
+  margin-top: 0.25rem;
+  color: var(--c-text-muted);
+  font-size: 0.875rem;
+  max-width: 380px;
+}
+
+.empty-state-action {
+  margin-top: 1rem;
+}

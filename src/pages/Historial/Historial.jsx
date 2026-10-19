@@ -1,281 +1,295 @@
-import React, { useState, useEffect } from "react";
-import { Search, Filter, Download, FileDown } from "lucide-react";
-import { collection, query, getDocs, where, orderBy } from "firebase/firestore";
-import { db } from "../../firebase";
-import { COLLECTIONS, MOVEMENT_LABELS } from "../../constants";
+import React, { useEffect, useMemo, useState } from "react";
+import { Search, FileDown, FileSpreadsheet, History, SearchX, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { useMaterials, useMovements } from "../../hooks/useFirestore";
+import { MOVEMENT_LABELS, MOVEMENT_TYPES } from "../../constants";
 import { formatDateTime } from "../../utils/formatters";
+import { exportToExcel } from "../../utils/exportExcel";
+import {
+  getMovementUser,
+  getMovementVariant,
+  normalize,
+  toDate,
+} from "../../utils/stock";
 import Layout from "../../components/Layout/Layout";
-import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Badge from "../../components/Badge/Badge";
-import { exportMovementsToPDF } from "../../utils/pdfExport";
-import toast from "react-hot-toast";
+import PageHeader from "../../components/PageHeader/PageHeader";
+import EmptyState from "../../components/EmptyState/EmptyState";
+import Loader from "../../components/Loader/Loader";
+import MovementDetail from "../../components/MovementDetail/MovementDetail";
 import "./Historial.css";
 
+const PAGE_SIZE = 50;
+
 const Historial = () => {
-  const [movements, setMovements] = useState([]);
-  const [materials, setMaterials] = useState([]);
-  const [filteredMovements, setFilteredMovements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMaterial, setSelectedMaterial] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
+  const { movements, loading: loadingMovements } = useMovements();
+  const { materials, loading: loadingMaterials } = useMaterials();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const [search, setSearch] = useState("");
+  const [material, setMaterial] = useState("all");
+  const [type, setType] = useState("all");
+  const [user, setUser] = useState("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(() => {
-    filterMovements();
-  }, [movements, searchTerm, selectedMaterial, selectedType]);
+  useEffect(() => setVisible(PAGE_SIZE), [search, material, type, user, from, to]);
 
-  const loadData = async () => {
-    try {
-      // Load materials
-      const materialsSnapshot = await getDocs(
-        collection(db, COLLECTIONS.MATERIALS)
-      );
-      const materialsData = materialsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMaterials(materialsData);
+  const users = useMemo(
+    () => [...new Set(movements.map(getMovementUser))].filter((u) => u !== "—").sort(),
+    [movements]
+  );
 
-      // Load all movements
-      const movementsQuery = query(
-        collection(db, COLLECTIONS.MOVEMENTS),
-        orderBy("createdAt", "desc")
-      );
-      const movementsSnapshot = await getDocs(movementsQuery);
-      const movementsData = movementsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMovements(movementsData);
-    } catch (error) {
-      console.error("Error loading history:", error);
-      toast.error("Error al cargar historial");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filtered = useMemo(() => {
+    const term = normalize(search.trim());
+    const fromDate = from ? new Date(`${from}T00:00:00`) : null;
+    const toDateLimit = to ? new Date(`${to}T23:59:59.999`) : null;
 
-  const filterMovements = () => {
-    let filtered = [...movements];
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (mov) =>
-          mov.materialName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mov.materialCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mov.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mov.userName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Material filter
-    if (selectedMaterial !== "all") {
-      filtered = filtered.filter((mov) => mov.materialId === selectedMaterial);
-    }
-
-    // Type filter
-    if (selectedType !== "all") {
-      filtered = filtered.filter((mov) => mov.type === selectedType);
-    }
-
-    setFilteredMovements(filtered);
-  };
-
-  const exportToCSV = () => {
-    if (filteredMovements.length === 0) {
-      toast.error("No hay datos para exportar");
-      return;
-    }
-
-    const headers = [
-      "Fecha",
-      "Material",
-      "Código",
-      "Tipo",
-      "Cantidad",
-      "Stock Anterior",
-      "Stock Nuevo",
-      "Motivo",
-      "Proyecto",
-      "Usuario",
-    ];
-    const rows = filteredMovements.map((mov) => [
-      formatDateTime(mov.createdAt?.toDate?.() || new Date()),
-      mov.materialName,
-      mov.materialCode,
-      MOVEMENT_LABELS[mov.type],
-      mov.quantity,
-      mov.previousQuantity,
-      mov.newQuantity,
-      mov.reason || "-",
-      mov.project || "-",
-      mov.userName || "-",
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
-
-    const blob = new Blob(["\ufeff" + csvContent], {
-      type: "text/csv;charset=utf-8;",
+    return movements.filter((mv) => {
+      if (material !== "all" && mv.materialId !== material) return false;
+      if (type !== "all" && mv.type !== type) return false;
+      if (user !== "all" && getMovementUser(mv) !== user) return false;
+      const date = toDate(mv.createdAt);
+      if (fromDate && (!date || date < fromDate)) return false;
+      if (toDateLimit && (!date || date > toDateLimit)) return false;
+      if (term) {
+        const haystack = normalize(
+          [mv.materialName, mv.materialCode, mv.reason, mv.project, mv.notes, getMovementUser(mv)].join(" ")
+        );
+        if (!haystack.includes(term)) return false;
+      }
+      return true;
     });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `historial_stock_${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
-    link.click();
+  }, [movements, search, material, type, user, from, to]);
 
-    toast.success("Historial exportado");
+  const hasFilters = search || material !== "all" || type !== "all" || user !== "all" || from || to;
+
+  const clearFilters = () => {
+    setSearch("");
+    setMaterial("all");
+    setType("all");
+    setUser("all");
+    setFrom("");
+    setTo("");
   };
 
-  const exportToPDF = () => {
-    if (filteredMovements.length === 0) {
-      toast.error("No hay datos para exportar");
-      return;
+  const handleExcel = async () => {
+    if (filtered.length === 0) return toast.error("No hay datos para exportar");
+    try {
+      await exportToExcel(
+        filtered.map((mv) => ({
+          Fecha: formatDateTime(toDate(mv.createdAt)),
+          Material: mv.materialName || "",
+          Código: mv.materialCode || "",
+          Tipo: MOVEMENT_LABELS[mv.type] || mv.type,
+          Cantidad: mv.quantity,
+          "Stock anterior": mv.previousQuantity,
+          "Stock nuevo": mv.newQuantity,
+          Origen: mv.fromLocation || "",
+          Destino: mv.toLocation || "",
+          Motivo: mv.reason || "",
+          Proyecto: mv.project || "",
+          Notas: mv.notes || "",
+          Usuario: getMovementUser(mv),
+          Estado: mv.voided ? `Anulado: ${mv.voidReason || ""}` : "Válido",
+        })),
+        "historial-movimientos",
+        "Historial"
+      );
+      toast.success("Excel generado");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el Excel");
     }
-
-    exportMovementsToPDF(filteredMovements);
-    toast.success("PDF generado exitosamente");
   };
 
-  if (loading) {
+  const handlePDF = async () => {
+    if (filtered.length === 0) return toast.error("No hay datos para exportar");
+    try {
+      const { exportMovementsToPDF } = await import("../../utils/pdfExport");
+      exportMovementsToPDF(
+        filtered.map((mv) => ({
+          ...mv,
+          type: MOVEMENT_LABELS[mv.type] || mv.type,
+          createdByName: getMovementUser(mv),
+        }))
+      );
+      toast.success("PDF generado");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el PDF");
+    }
+  };
+
+  if (loadingMovements || loadingMaterials) {
     return (
       <Layout>
-        <div className="historial-loading">
-          <div className="spinner"></div>
-          <p>Cargando historial...</p>
-        </div>
+        <Loader text="Cargando historial..." />
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="historial">
-        <div className="historial-header">
-          <div>
-            <h1>Historial Completo</h1>
-            <p>{filteredMovements.length} registros</p>
-          </div>
-          <div className="historial-header-actions">
-            <Button variant="ghost" icon={FileDown} onClick={exportToPDF}>
-              Exportar PDF
-            </Button>
-            <Button variant="primary" icon={Download} onClick={exportToCSV}>
-              Exportar CSV
-            </Button>
-          </div>
-        </div>
+      <div className="page historial">
+        <PageHeader
+          title="Historial"
+          subtitle={
+            hasFilters
+              ? `${filtered.length} de ${movements.length} registros`
+              : `${movements.length} movimientos registrados`
+          }
+          actions={
+            <>
+              <Button variant="secondary" icon={FileSpreadsheet} onClick={handleExcel}>
+                Excel
+              </Button>
+              <Button variant="secondary" icon={FileDown} onClick={handlePDF}>
+                PDF
+              </Button>
+            </>
+          }
+        />
 
         <div className="historial-filters">
           <Input
-            placeholder="Buscar por material, código, motivo o usuario..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            className="filter-search"
+            name="search"
+            label="Buscar"
+            placeholder="Material, código, motivo, proyecto..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             icon={Search}
           />
-
-          <select
-            className="input"
-            value={selectedMaterial}
-            onChange={(e) => setSelectedMaterial(e.target.value)}
-          >
-            <option value="all">Todos los materiales</option>
-            {materials.map((mat) => (
-              <option key={mat.id} value={mat.id}>
-                {mat.name} ({mat.code})
+          <Input type="select" label="Material" name="material" value={material} onChange={(e) => setMaterial(e.target.value)}>
+            <option value="all">Todos</option>
+            {materials.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.code})
               </option>
             ))}
-          </select>
-
-          <select
-            className="input"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-          >
-            <option value="all">Todos los tipos</option>
+          </Input>
+          <Input type="select" label="Tipo" name="type" value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="all">Todos</option>
             {Object.entries(MOVEMENT_LABELS).map(([key, label]) => (
               <option key={key} value={key}>
                 {label}
               </option>
             ))}
-          </select>
+          </Input>
+          <Input type="select" label="Usuario" name="user" value={user} onChange={(e) => setUser(e.target.value)}>
+            <option value="all">Todos</option>
+            {users.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </Input>
+          <Input type="date" label="Desde" name="from" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+          <Input type="date" label="Hasta" name="to" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+          {hasFilters && (
+            <Button variant="ghost" icon={X} onClick={clearFilters} className="filter-clear">
+              Limpiar
+            </Button>
+          )}
         </div>
 
-        {filteredMovements.length === 0 ? (
-          <Card>
-            <p className="empty-state">No se encontraron registros</p>
-          </Card>
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={movements.length ? SearchX : History}
+            title={movements.length ? "Sin resultados" : "El historial está vacío"}
+            description={
+              movements.length
+                ? "Ningún movimiento coincide con los filtros."
+                : "Los movimientos de stock aparecerán aquí."
+            }
+            action={
+              hasFilters && (
+                <Button variant="secondary" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
+              )
+            }
+          />
         ) : (
-          <div className="historial-table-container">
-            <table className="historial-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Material</th>
-                  <th>Tipo</th>
-                  <th>Cantidad</th>
-                  <th>Stock Anterior</th>
-                  <th>Stock Nuevo</th>
-                  <th>Motivo</th>
-                  <th>Usuario</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMovements.map((movement) => (
-                  <tr key={movement.id}>
-                    <td className="date-cell">
-                      {formatDateTime(
-                        movement.createdAt?.toDate?.() || new Date()
-                      )}
-                    </td>
-                    <td>
-                      <div className="material-cell">
-                        <span className="material-name">
-                          {movement.materialName}
-                        </span>
-                        <span className="material-code">
-                          {movement.materialCode}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge
-                        variant={
-                          movement.type === "entrada" ||
-                          movement.type === "devolucion"
-                            ? "success"
-                            : movement.type === "salida"
-                            ? "warning"
-                            : "info"
-                        }
-                      >
-                        {MOVEMENT_LABELS[movement.type]}
-                      </Badge>
-                    </td>
-                    <td className="quantity-cell">{movement.quantity}</td>
-                    <td className="stock-cell">{movement.previousQuantity}</td>
-                    <td className="stock-cell highlight">
-                      {movement.newQuantity}
-                    </td>
-                    <td className="reason-cell">{movement.reason}</td>
-                    <td className="user-cell">{movement.userName || "-"}</td>
+          <>
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Material</th>
+                    <th>Tipo</th>
+                    <th className="num">Cantidad</th>
+                    <th className="num">Stock</th>
+                    <th>Motivo</th>
+                    <th>Usuario</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.slice(0, visible).map((mv) => (
+                    <tr
+                      key={mv.id}
+                      className={`clickable ${mv.voided ? "is-voided" : ""}`}
+                      onClick={() => setSelectedId(mv.id)}
+                    >
+                      <td className="nowrap text-secondary">{formatDateTime(toDate(mv.createdAt))}</td>
+                      <td>
+                        <span className="cell-title">{mv.materialName}</span>
+                        <span className="cell-sub mono">{mv.materialCode}</span>
+                      </td>
+                      <td>
+                        <Badge size="sm" variant={getMovementVariant(mv.type)}>
+                          {MOVEMENT_LABELS[mv.type] || mv.type}
+                        </Badge>
+                        {mv.voided && (
+                          <Badge size="sm" variant="error" className="voided-badge">
+                            Anulado
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="num">{mv.quantity}</td>
+                      <td className="num text-secondary">
+                        {mv.type === MOVEMENT_TYPES.TRANSFERENCIA ? (
+                          <span className="cell-sub">
+                            {mv.fromLocation} → {mv.toLocation}
+                          </span>
+                        ) : (
+                          <>
+                            {mv.previousQuantity} → <strong>{mv.newQuantity}</strong>
+                          </>
+                        )}
+                      </td>
+                      <td className="reason-cell">
+                        {mv.reason || "—"}
+                        {mv.project && <span className="cell-sub">{mv.project}</span>}
+                      </td>
+                      <td className="nowrap">{getMovementUser(mv)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filtered.length > visible && (
+              <div className="load-more">
+                <Button variant="secondary" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
+                  Mostrar más ({filtered.length - visible} restantes)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
+      {selectedId && movements.find((m) => m.id === selectedId) && (
+        <MovementDetail
+          movement={movements.find((m) => m.id === selectedId)}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </Layout>
   );
 };

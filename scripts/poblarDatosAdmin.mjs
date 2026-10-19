@@ -328,7 +328,7 @@ async function poblarDatos() {
     console.log("\n📊 Resumen:");
     console.log(`   - ${materialesEjemplo.length} materiales`);
     console.log(`   - ${movimientosEjemplo.length} movimientos`);
-    console.log("\n🌐 Ver en: https://control-de-stock-e4f5f.web.app\n");
+    console.log(`\n🌐 Ver en: https://${process.env.VITE_FIREBASE_PROJECT_ID}.web.app\n`);
   } catch (error) {
     console.error("❌ Error:", error.message);
   } finally {

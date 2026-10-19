@@ -5,11 +5,8 @@
     <meta charset="UTF-8" />
 
     <!-- Ícono que aparece en la pestaña del navegador (favicon) -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link
-      rel="alternate icon"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23DE591F' rx='4'/><path d='M8 10h16v2H8V10zm0 4h16v2H8v-2zm0 4h12v2H8v-2zm0 4h8v2H8v-2z' fill='white'/></svg>"
-    />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
 
     <!-- 
       Configuración responsive: 
@@ -25,11 +22,30 @@
     -->
     <meta
       name="description"
-      content="Sistema profesional de Control de Stock para productora técnica de eventos"
+      content="__APP_DESCRIPTION__"
     />
 
     <!-- Título que aparece en la pestaña del navegador -->
-    <title>Control de Stock | Sistema Profesional</title>
+    <meta name="theme-color" content="#f3f4f6" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Aplica el tema guardado antes de pintar para evitar parpadeo
+      (function () {
+        try {
+          var t = localStorage.getItem("cs-theme") === "dark" ? "dark" : "light";
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+
+    <title>__APP_NAME__</title>
   </head>
   <body>
     <script src="/security.js"></script>

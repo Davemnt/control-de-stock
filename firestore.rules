@@ -1,76 +1,157 @@
 rules_version = '2';
+
+// ============================================================
+// REGLAS DE SEGURIDAD — Control de Stock
+// Reflejan los permisos de la app: un usuario no puede saltárselos
+// aunque use la API de Firebase directamente.
+//
+//   admin    → todo
+//   employee → crea materiales, registra movimientos
+//   user     → registra movimientos
+//   guest    → sólo lectura
+// ============================================================
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ============================================
-    // FUNCIONES DE SEGURIDAD SIMPLIFICADAS
-    // ============================================
-    
-    // Verificar si el usuario está autenticado
-    function isAuthenticated() {
+
+    // ---------- Funciones ----------
+    function signedIn() {
       return request.auth != null;
     }
-    
-    // ============================================
-    // COLECCIÓN: USERS
-    // ============================================
+
+    function profilePath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function profile() {
+      return get(profilePath()).data;
+    }
+
+    // Usuario con perfil y no desactivado
+    function active() {
+      return signedIn() && exists(profilePath()) && profile().get('active', true) != false;
+    }
+
+    function role() {
+      return profile().get('role', '');
+    }
+
+    function isAdmin() {
+      return active() && role() == 'admin';
+    }
+
+    // Puede registrar movimientos
+    function isStaff() {
+      return active() && role() in ['admin', 'employee', 'user'];
+    }
+
+    // Puede dar de alta materiales
+    function canCreateMaterials() {
+      return active() && role() in ['admin', 'employee'];
+    }
+
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function nonNegative(field) {
+      return !(field in request.resource.data)
+        || (request.resource.data[field] is number && request.resource.data[field] >= 0);
+    }
+
+    function validStock() {
+      return nonNegative('quantity')
+        && nonNegative('quantityCommitted')
+        && nonNegative('quantityMaintenance');
+    }
+
+    // Mientras no exista system/bootstrap, el primer usuario puede crear su
+    // propio perfil (scripts/createAdmin.mjs). La app crea ese documento en
+    // cuanto un administrador inicia sesión, y desde entonces sólo un admin
+    // puede crear perfiles.
+    function bootstrapOpen() {
+      return !exists(/databases/$(database)/documents/system/bootstrap);
+    }
+
+    // ---------- Usuarios ----------
     match /users/{userId} {
-      allow read, write: if isAuthenticated();
+      allow read: if signedIn();
+
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == userId && bootstrapOpen());
+
+      // El admin edita a cualquiera; cada usuario sólo su propio nombre
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == userId && changedOnly(['name', 'updatedAt']));
+
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == userId);
     }
-    
-    // ============================================
-    // COLECCIÓN: DEMO_USERS (Usuarios demo separados)
-    // ============================================
-    match /demo_users/{userId} {
-      allow read, write: if isAuthenticated();
-    }
-    
-    // ============================================
-    // COLECCIONES DEMO (Datos separados para demostración)
-    // ============================================
-    match /demo_materials/{materialId} {
-      allow read, write: if isAuthenticated();
-    }
-    
-    match /demo_movements/{movementId} {
-      allow read, write: if isAuthenticated();
-    }
-    
-    match /demo_logs/{logId} {
-      allow read, write: if isAuthenticated();
-    }
-    
-    // ============================================
-    // COLECCIÓN: MATERIALS
-    // ============================================
+
+    // ---------- Materiales ----------
     match /materials/{materialId} {
-      allow read, write: if isAuthenticated();
+      allow read: if active();
+
+      allow create: if canCreateMaterials()
+        && request.resource.data.name is string && request.resource.data.name.size() > 0
+        && request.resource.data.code is string && request.resource.data.code.size() > 0
+        && validStock();
+
+      // Admin: cualquier campo. Resto del personal: sólo los campos de stock
+      // que modifica un movimiento (cantidades y ubicación).
+      allow update: if validStock() && (
+        isAdmin()
+        || (isStaff() && changedOnly([
+          'quantity', 'quantityCommitted', 'quantityMaintenance', 'location', 'updatedAt'
+        ]))
+      );
+
+      allow delete: if isAdmin();
     }
-    
-    // ============================================
-    // COLECCIÓN: MOVEMENTS
-    // ============================================
+
+    // ---------- Movimientos ----------
     match /movements/{movementId} {
-      allow read, write: if isAuthenticated();
+      allow read: if active();
+
+      // Siempre a nombre de quien lo registra. Bajas y ajustes, sólo admin.
+      allow create: if isStaff()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.quantity is number
+        && request.resource.data.quantity >= 0
+        && (!(request.resource.data.type in ['baja', 'ajuste']) || isAdmin());
+
+      // Nunca se borran. El admin sólo corrige textos o los anula.
+      allow update: if isAdmin() && changedOnly([
+        'reason', 'project', 'notes', 'editedAt', 'editedBy', 'editedByName',
+        'voided', 'voidReason', 'voidedAt', 'voidedBy', 'voidedByName'
+      ]);
+
+      allow delete: if false;
     }
-    
-    // ============================================
-    // COLECCIÓN: LOGS
-    // ============================================
-    match /logs/{logId} {
-      allow read, write: if isAuthenticated();
+
+    // ---------- Configuración del sistema ----------
+    match /system/bootstrap {
+      allow read: if signedIn();
+      allow create: if isAdmin();
+      allow update, delete: if false;
     }
-    
-    // ============================================
-    // COLECCIÓN: SYSTEM_CONFIG
-    // ============================================
+
     match /system/{configId} {
-      allow read, write: if isAuthenticated();
+      allow read: if active();
+      allow write: if isAdmin();
     }
-    
-    // ============================================
-    // DENEGAR TODO LO DEMÁS
-    // ============================================
+
+    // ---------- Cola de emails (extensión "Trigger Email") ----------
+    match /mail/{mailId} {
+      allow create: if isStaff();
+      allow read, update, delete: if false;
+    }
+
+    // ---------- Registros antiguos ----------
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ---------- Todo lo demás ----------
     match /{document=**} {
       allow read, write: if false;
     }

@@ -1,6 +1,7 @@
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import { formatDateTime } from "./formatters";
+import { APP_NAME } from "../config/branding";
 
 /**
  * Genera un PDF de la lista de materiales
@@ -14,7 +15,7 @@ export const exportMaterialsToPDF = (materials, options = {}) => {
   // Header
   doc.setFontSize(20);
   doc.setTextColor(222, 89, 31); // Brand color
-  doc.text("Control de Stock - Inventario de Materiales", 14, 20);
+  doc.text(`${APP_NAME} - Inventario de Materiales`, 14, 20);
 
   // Subtitle
   doc.setFontSize(10);
@@ -43,7 +44,7 @@ export const exportMaterialsToPDF = (materials, options = {}) => {
     mat.status || "-",
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: yPos + 5,
     head: [
       [
@@ -116,7 +117,7 @@ export const exportMovementsToPDF = (movements) => {
   // Header
   doc.setFontSize(20);
   doc.setTextColor(222, 89, 31);
-  doc.text("Control de Stock - Historial de Movimientos", 14, 20);
+  doc.text(`${APP_NAME} - Historial de Movimientos`, 14, 20);
 
   // Subtitle
   doc.setFontSize(10);
@@ -134,7 +135,7 @@ export const exportMovementsToPDF = (movements) => {
     mov.createdByName || "-",
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 35,
     head: [
       ["Fecha", "Tipo", "Material", "Cant.", "Origen", "Destino", "Usuario"],
@@ -234,7 +235,7 @@ export const exportMaterialReportPDF = (material, movements = []) => {
       mov.createdByName || "-",
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 70,
       head: [["Fecha", "Tipo", "Cantidad", "Motivo", "Usuario"]],
       body: tableData,

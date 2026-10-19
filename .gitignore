@@ -36,3 +36,7 @@ firebase-debug.log
 .env.cliente*
 !.env.example
 !.env.demo
+
+# Configuración por cliente (scripts/nuevoCliente.mjs)
+.env.*
+!.env.example

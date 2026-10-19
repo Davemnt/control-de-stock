@@ -1,14 +1,19 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { ROLES, COLLECTIONS } from "../constants";
+import { hasPermission } from "../utils/permissions";
+import Loader from "../components/Loader/Loader";
 import toast from "react-hot-toast";
+
+// Minutos sin actividad antes de cerrar la sesión automáticamente
+const INACTIVITY_MINUTES = 30;
 
 const AuthContext = createContext();
 
@@ -20,304 +25,171 @@ export const useAuth = () => {
   return context;
 };
 
+const AUTH_ERRORS = {
+  "auth/invalid-credential": "Email o contraseña incorrectos",
+  "auth/wrong-password": "Email o contraseña incorrectos",
+  "auth/user-not-found": "Email o contraseña incorrectos",
+  "auth/invalid-email": "El email no es válido",
+  "auth/user-disabled": "Esta cuenta está deshabilitada",
+  "auth/too-many-requests": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo",
+  "auth/network-request-failed": "Sin conexión. Revisa tu red e inténtalo de nuevo",
+};
+
+export const getAuthErrorMessage = (error, fallback = "Error al iniciar sesión") =>
+  AUTH_ERRORS[error?.code] || error?.message || fallback;
+
+/** Lee el perfil del usuario y valida que exista y esté activo. */
+const fetchProfile = async (user) => {
+  const snap = await getDoc(doc(db, COLLECTIONS.USERS, user.uid));
+  if (!snap.exists()) {
+    throw new Error("Tu cuenta no tiene un perfil asignado. Contacta al administrador.");
+  }
+  const data = { ...snap.data(), uid: user.uid };
+  if (data.active === false) {
+    throw new Error("Tu usuario está desactivado. Contacta al administrador.");
+  }
+  return data;
+};
+
+/**
+ * Las reglas de Firestore permiten que el primer usuario cree su propio perfil
+ * sólo mientras no exista system/bootstrap. En cuanto un admin entra, se crea
+ * ese documento y la puerta queda cerrada.
+ */
+const closeBootstrap = async (profile) => {
+  if (profile.role !== ROLES.ADMIN) return;
+  try {
+    const ref = doc(db, "system", "bootstrap");
+    if (!(await getDoc(ref)).exists()) {
+      await setDoc(ref, { closedAt: serverTimestamp(), closedBy: profile.uid });
+    }
+  } catch (error) {
+    console.warn("No se pudo cerrar el bootstrap:", error);
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
-  const [sessionId] = useState(() => Date.now().toString());
+  const loginInProgress = useRef(false);
 
-  // Get user data from Firestore
-  const getUserData = async (uid, email = null) => {
-    try {
-      const userDoc = await getDoc(doc(db, COLLECTIONS.USERS, uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        // Guardar info del usuario en localStorage
-        localStorage.setItem(
-          "currentUser",
-          JSON.stringify({
-            uid,
-            email: userData.email,
-          })
-        );
-        return userData;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error getting user data:", error);
-      return null;
-    }
-  };
-
-  // Sign in
-  const login = async (email, password) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const data = await getUserData(result.user.uid, email);
-
-      if (!data) {
-        throw new Error("Usuario no encontrado en la base de datos");
+  // Escucha cambios de sesión (incluye recarga de página)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setCurrentUser(null);
+        setUserData(null);
+        setLoading(false);
+        return;
       }
 
-      if (data.active === false) {
+      // login() valida el perfil por su cuenta y muestra el error en el formulario
+      if (loginInProgress.current) return;
+
+      try {
+        const profile = await fetchProfile(user);
+        setUserData(profile);
+        setCurrentUser(user);
+        closeBootstrap(profile);
+      } catch (error) {
+        console.error("Perfil inválido:", error);
+        toast.error(error.message);
         await signOut(auth);
-        throw new Error("Usuario desactivado");
+      } finally {
+        setLoading(false);
       }
+    });
 
-      setUserData(data);
+    return unsubscribe;
+  }, []);
 
-      toast.success(`Bienvenido, ${data.name}`);
+  const login = async (email, password) => {
+    loginInProgress.current = true;
+    try {
+      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+      let profile;
+      try {
+        profile = await fetchProfile(result.user);
+      } catch (error) {
+        await signOut(auth);
+        throw error;
+      }
+      setUserData(profile);
+      setCurrentUser(result.user);
+      closeBootstrap(profile);
+      toast.success(`Bienvenido, ${profile.name || "usuario"}`);
       return result;
     } catch (error) {
-      let message = "Error al iniciar sesión";
-
-      if (error.code === "auth/user-not-found") {
-        message = "Usuario no encontrado";
-      } else if (
-        error.code === "auth/wrong-password" ||
-        error.code === "auth/invalid-credential"
-      ) {
-        message = "Contraseña incorrecta";
-      } else if (error.code === "auth/invalid-email") {
-        message = "Email inválido";
-      } else if (error.message) {
-        message = error.message;
-      }
-
-      toast.error(message);
-      throw error;
+      throw new Error(getAuthErrorMessage(error));
+    } finally {
+      loginInProgress.current = false;
     }
   };
 
-  // Sign out
-  const logout = async () => {
+  const logout = useCallback(async (message = "Sesión cerrada") => {
     try {
       await signOut(auth);
       setUserData(null);
-      // Limpiar localStorage
-      localStorage.removeItem("currentUser");
-      toast.success("Sesión cerrada");
+      setCurrentUser(null);
+      if (message) toast.success(message);
     } catch (error) {
       toast.error("Error al cerrar sesión");
       throw error;
     }
+  }, []);
+
+  const resetPassword = (email) => sendPasswordResetEmail(auth, email.trim());
+
+  const refreshUserData = async () => {
+    if (!auth.currentUser) return;
+    const profile = await fetchProfile(auth.currentUser);
+    setUserData(profile);
   };
 
-  // Register new user (admin only)
-  const register = async (email, password, userData) => {
-    try {
-      const result = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      // Create user document in Firestore
-      await setDoc(doc(db, COLLECTIONS.USERS, result.user.uid), {
-        ...userData,
-        uid: result.user.uid,
-        email: email.toLowerCase(),
-        active: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      toast.success("Usuario creado exitosamente");
-      return result;
-    } catch (error) {
-      let message = "Error al crear usuario";
-
-      if (error.code === "auth/email-already-in-use") {
-        message = "El email ya está en uso";
-      } else if (error.code === "auth/weak-password") {
-        message = "La contraseña es muy débil";
-      } else if (error.code === "auth/invalid-email") {
-        message = "Email inválido";
-      }
-
-      toast.error(message);
-      throw error;
-    }
-  };
-
-  // Sistema de cierre automático de sesión al cerrar navegador
+  // Cierre de sesión por inactividad
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      // Marcar que la ventana se está cerrando
-      sessionStorage.setItem("windowClosing", "true");
-    };
+    if (!currentUser) return undefined;
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        // La pestaña se oculta, puede ser que se esté cerrando
-        sessionStorage.setItem("tabHidden", Date.now().toString());
-      } else if (document.visibilityState === "visible") {
-        // La pestaña vuelve a estar visible
-        const hiddenTime = sessionStorage.getItem("tabHidden");
-        if (hiddenTime) {
-          const timeHidden = Date.now() - parseInt(hiddenTime);
-          // Si estuvo oculta más de 30 segundos, cerrar sesión
-          if (timeHidden > 30000 && currentUser) {
-            logout();
-            toast.error("Sesión cerrada por inactividad");
-          }
-        }
-        sessionStorage.removeItem("tabHidden");
+    let lastActivity = Date.now();
+    const markActivity = () => {
+      lastActivity = Date.now();
+    };
+    const events = ["mousedown", "keydown", "touchstart", "scroll", "visibilitychange"];
+    events.forEach((evt) => window.addEventListener(evt, markActivity, { passive: true }));
+
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivity > INACTIVITY_MINUTES * 60 * 1000) {
+        logout("Sesión cerrada por inactividad");
       }
-    };
-
-    // Verificar si es una nueva sesión del navegador
-    const checkBrowserSession = () => {
-      const lastSessionId = sessionStorage.getItem("currentSessionId");
-      if (!lastSessionId || lastSessionId !== sessionId) {
-        // Nueva sesión del navegador - cerrar sesión anterior
-        if (currentUser) {
-          logout();
-        }
-        sessionStorage.setItem("currentSessionId", sessionId);
-      }
-    };
-
-    // Ejecutar verificación al cargar
-    checkBrowserSession();
-
-    // Event listeners
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    }, 60 * 1000);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      events.forEach((evt) => window.removeEventListener(evt, markActivity));
+      clearInterval(interval);
     };
-  }, [currentUser, sessionId]);
+  }, [currentUser, logout]);
 
-  // Listen to auth state changes
-  useEffect(() => {
-    let unsubscribe;
-
-    try {
-      unsubscribe = onAuthStateChanged(auth, async (user) => {
-        try {
-          setCurrentUser(user);
-
-          if (user) {
-            const data = await getUserData(user.uid, user.email);
-            setUserData(data);
-
-            // Registrar sesión activa para múltiples usuarios
-            const userSession = {
-              uid: user.uid,
-              email: user.email,
-              sessionId,
-              timestamp: Date.now(),
-              userAgent: navigator.userAgent,
-            };
-            localStorage.setItem(
-              "activeUserSession",
-              JSON.stringify(userSession)
-            );
-          } else {
-            setUserData(null);
-            localStorage.removeItem("currentUser");
-            localStorage.removeItem("activeUserSession");
-          }
-
-          setAuthError(null);
-        } catch (error) {
-          console.error("Error en onAuthStateChanged:", error);
-          setAuthError(error.message);
-          toast.error("Error de autenticación: " + error.message);
-        }
-
-        setLoading(false);
-      });
-    } catch (error) {
-      console.error("Error al inicializar Firebase Auth:", error);
-      setAuthError(error.message);
-      setLoading(false);
-    }
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [sessionId]);
-
+  const role = userData?.role;
   const value = {
     currentUser,
     userData,
     loading,
     login,
     logout,
-    register,
-    isAdmin: userData?.role === ROLES.ADMIN,
-    isEmployee: userData?.role === ROLES.EMPLOYEE,
-    isUser: userData?.role === ROLES.USER,
-    isGuest: userData?.role === ROLES.GUEST,
+    resetPassword,
+    refreshUserData,
+    role,
+    can: (permission) => hasPermission(role, permission),
+    isAdmin: role === ROLES.ADMIN,
+    isEmployee: role === ROLES.EMPLOYEE,
+    isUser: role === ROLES.USER,
+    isGuest: role === ROLES.GUEST,
   };
-
-  // Si hay error de autenticación, mostrar mensaje
-  if (authError) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          padding: "20px",
-          backgroundColor: "#f5f5f5",
-        }}
-      >
-        <div
-          style={{
-            background: "white",
-            padding: "30px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            textAlign: "center",
-            maxWidth: "400px",
-          }}
-        >
-          <h2 style={{ color: "#d32f2f", marginBottom: "20px" }}>
-            ❌ Error de Firebase
-          </h2>
-          <p style={{ marginBottom: "15px" }}>Error de autenticación:</p>
-          <code
-            style={{
-              display: "block",
-              background: "#f5f5f5",
-              padding: "10px",
-              borderRadius: "4px",
-              fontSize: "12px",
-              marginBottom: "20px",
-            }}
-          >
-            {authError}
-          </code>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              background: "#1976d2",
-              color: "white",
-              border: "none",
-              padding: "12px 24px",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
-            Recargar
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? <Loader fullScreen text="Iniciando..." /> : children}
     </AuthContext.Provider>
   );
 };

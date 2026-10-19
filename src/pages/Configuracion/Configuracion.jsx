@@ -1,314 +1,413 @@
-import React, { useState, useEffect } from "react";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Save,
-  X,
-  Moon,
-  Sun,
-  Settings as SettingsIcon,
-} from "lucide-react";
-import {
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import React, { useEffect, useMemo, useState } from "react";
+import { Plus, Edit, Trash2, Moon, Sun, KeyRound, Save, Tags } from "lucide-react";
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { ALERTS_DOC } from "../../utils/alerts";
+import { isValidEmail } from "../../utils/validation";
+import toast from "react-hot-toast";
 import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useCategories, useMaterials } from "../../hooks/useFirestore";
+import { COLLECTIONS, ROLE_LABELS } from "../../constants";
+import { normalize } from "../../utils/stock";
 import Layout from "../../components/Layout/Layout";
 import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Modal from "../../components/Modal/Modal";
-import toast from "react-hot-toast";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import PageHeader from "../../components/PageHeader/PageHeader";
+import EmptyState from "../../components/EmptyState/EmptyState";
 import "./Configuracion.css";
 
-const Configuracion = () => {
-  const { userData, isAdmin } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({
-    key: "",
-    label: "",
-  });
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      const configDoc = await getDoc(doc(db, "system", "categories"));
-
-      if (configDoc.exists()) {
-        const data = configDoc.data();
-        setCategories(data.categories || []);
-      } else {
-        // Crear configuración por defecto
-        const defaultCategories = [
-          { key: "Audio", label: "Audio" },
-          { key: "Iluminación", label: "Iluminación" },
-          { key: "Video", label: "Video" },
-          { key: "Rigging", label: "Rigging" },
-          { key: "Estructuras", label: "Estructuras" },
-          { key: "Cables", label: "Cables y Accesorios" },
-          { key: "Mochilas Técnicas", label: "Mochilas Técnicas" },
-          { key: "Repuestos", label: "Repuestos" },
-        ];
-        await setDoc(doc(db, "system", "categories"), {
-          categories: defaultCategories,
-          updatedAt: serverTimestamp(),
-          updatedBy: userData.uid,
-        });
-        setCategories(defaultCategories);
-      }
-    } catch (error) {
-      console.error("Error loading categories:", error);
-      toast.error("Error al cargar configuración");
-    } finally {
-      setLoading(false);
-    }
-  };
+const CategoryForm = ({ category, categories, onSave, onClose }) => {
+  const [label, setLabel] = useState(category?.label || "");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.key || !formData.label) {
-      toast.error("Completa todos los campos");
-      return;
-    }
-
-    try {
-      let updatedCategories;
-
-      if (editingCategory) {
-        // Editar categoría existente
-        updatedCategories = categories.map((cat) =>
-          cat.key === editingCategory.key
-            ? { key: formData.key, label: formData.label }
-            : cat
-        );
-        toast.success("Categoría actualizada");
-      } else {
-        // Verificar que no exista
-        if (categories.some((cat) => cat.key === formData.key)) {
-          toast.error("Ya existe una categoría con ese identificador");
-          return;
-        }
-        // Agregar nueva categoría
-        updatedCategories = [
-          ...categories,
-          { key: formData.key, label: formData.label },
-        ];
-        toast.success("Categoría agregada");
-      }
-
-      // Guardar en Firestore
-      await updateDoc(doc(db, "system", "categories"), {
-        categories: updatedCategories,
-        updatedAt: serverTimestamp(),
-        updatedBy: userData.uid,
-      });
-
-      setCategories(updatedCategories);
-      setShowModal(false);
-      resetForm();
-    } catch (error) {
-      console.error("Error saving category:", error);
-      toast.error("Error al guardar categoría");
-    }
-  };
-
-  const handleEdit = (category) => {
-    setEditingCategory(category);
-    setFormData({
-      key: category.key,
-      label: category.label,
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async (categoryKey) => {
-    if (!window.confirm("¿Estás seguro de eliminar esta categoría?")) {
-      return;
-    }
-
-    try {
-      const updatedCategories = categories.filter(
-        (cat) => cat.key !== categoryKey
-      );
-
-      await updateDoc(doc(db, "system", "categories"), {
-        categories: updatedCategories,
-        updatedAt: serverTimestamp(),
-        updatedBy: userData.uid,
-      });
-
-      setCategories(updatedCategories);
-      toast.success("Categoría eliminada");
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      toast.error("Error al eliminar categoría");
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({ key: "", label: "" });
-    setEditingCategory(null);
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="config-loading">
-          <div className="spinner"></div>
-          <p>Cargando configuración...</p>
-        </div>
-      </Layout>
+    const value = label.trim();
+    if (!value) return setError("El nombre es obligatorio");
+    const duplicated = categories.some(
+      (c) => c.key !== category?.key && normalize(c.label) === normalize(value)
     );
-  }
+    if (duplicated) return setError("Ya existe una categoría con ese nombre");
+
+    setSaving(true);
+    try {
+      await onSave(value);
+      onClose();
+    } catch {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen
+      onClose={saving ? () => {} : onClose}
+      title={category ? "Editar categoría" : "Nueva categoría"}
+      size="sm"
+    >
+      <form onSubmit={handleSubmit} className="form-stack" noValidate>
+        <Input
+          label="Nombre"
+          name="label"
+          value={label}
+          onChange={(e) => {
+            setLabel(e.target.value);
+            setError("");
+          }}
+          error={error}
+          placeholder="Ej: Audio profesional"
+          helper={category ? `Identificador interno: ${category.key}` : undefined}
+          required
+        />
+        <div className="form-actions">
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={saving}>
+            {category ? "Guardar" : "Crear"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+/** Avisos por email de stock bajo (documento system/alerts) */
+const AlertsSettings = () => {
+  const { currentUser } = useAuth();
+  const [enabled, setEnabled] = useState(false);
+  const [emails, setEmails] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getDoc(doc(db, ...ALERTS_DOC))
+      .then((snap) => {
+        if (snap.exists()) {
+          setEnabled(Boolean(snap.data().enabled));
+          setEmails((snap.data().emails || []).join("\n"));
+        }
+      })
+      .catch((err) => console.error("Error al cargar avisos:", err))
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const list = [...new Set(emails.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter(Boolean))];
+    const invalid = list.filter((x) => !isValidEmail(x));
+    if (invalid.length) return setError(`Emails no válidos: ${invalid.join(", ")}`);
+    if (enabled && !list.length) return setError("Agrega al menos un email");
+    setError("");
+    setSaving(true);
+    try {
+      await setDoc(doc(db, ...ALERTS_DOC), {
+        enabled,
+        emails: list,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser?.uid || "",
+      });
+      setEmails(list.join("\n"));
+      toast.success("Avisos guardados");
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudieron guardar los avisos");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card title="Avisos de stock bajo por email" subtitle="Se envía un email cuando un material queda por debajo de su mínimo">
+      <form className="form-stack" onSubmit={handleSave}>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            disabled={!loaded}
+          />
+          Enviar avisos automáticos
+        </label>
+        <Input
+          type="textarea"
+          label="Destinatarios"
+          name="alertEmails"
+          rows={3}
+          value={emails}
+          onChange={(e) => {
+            setEmails(e.target.value);
+            setError("");
+          }}
+          placeholder={"compras@empresa.com\ndeposito@empresa.com"}
+          helper="Uno por línea o separados por comas."
+          error={error}
+          disabled={!loaded}
+        />
+        <p className="config-row-desc">
+          Requiere la extensión gratuita «Trigger Email from Firestore» instalada en Firebase (plan
+          Blaze), configurada con la colección <code>mail</code>. Sin ella, los avisos quedan en cola
+          y no se envían.
+        </p>
+        <div>
+          <Button type="submit" icon={Save} loading={saving} disabled={!loaded}>
+            Guardar avisos
+          </Button>
+        </div>
+      </form>
+    </Card>
+  );
+};
+
+const Configuracion = () => {
+  const { userData, currentUser, isAdmin, resetPassword, refreshUserData } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const { categories } = useCategories();
+  const { materials } = useMaterials();
+
+  const [name, setName] = useState(userData?.name || "");
+  const [savingName, setSavingName] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+  const [categoryTarget, setCategoryTarget] = useState(null); // null | "new" | category
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+
+  const usage = useMemo(() => {
+    const map = {};
+    materials.forEach((m) => {
+      map[m.category] = (map[m.category] || 0) + 1;
+    });
+    return map;
+  }, [materials]);
+
+  const saveCategories = async (list) => {
+    try {
+      await setDoc(
+        doc(db, "system", "categories"),
+        { categories: list, updatedAt: serverTimestamp(), updatedBy: currentUser?.uid || "" },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error("Error saving categories:", error);
+      toast.error(
+        error.code === "permission-denied"
+          ? "No tienes permisos para modificar categorías"
+          : "No se pudieron guardar las categorías"
+      );
+      throw error;
+    }
+  };
+
+  const handleSaveCategory = async (label) => {
+    if (categoryTarget === "new") {
+      // El identificador se deriva del nombre y no cambia aunque se renombre
+      let key = label;
+      let n = 2;
+      while (categories.some((c) => normalize(c.key) === normalize(key))) key = `${label} ${n++}`;
+      await saveCategories([...categories, { key, label }]);
+      toast.success("Categoría creada");
+    } else {
+      await saveCategories(
+        categories.map((c) => (c.key === categoryTarget.key ? { ...c, label } : c))
+      );
+      toast.success("Categoría actualizada");
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    await saveCategories(categories.filter((c) => c.key !== categoryToDelete.key));
+    toast.success("Categoría eliminada");
+  };
+
+  const handleSaveName = async (e) => {
+    e.preventDefault();
+    const value = name.trim();
+    if (!value) return toast.error("El nombre no puede estar vacío");
+    setSavingName(true);
+    try {
+      await updateDoc(doc(db, COLLECTIONS.USERS, currentUser.uid), {
+        name: value,
+        updatedAt: serverTimestamp(),
+      });
+      await refreshUserData();
+      toast.success("Perfil actualizado");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo actualizar el perfil");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setSendingReset(true);
+    try {
+      await resetPassword(currentUser.email);
+      toast.success(`Te enviamos un enlace a ${currentUser.email}`);
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo enviar el email");
+    } finally {
+      setSendingReset(false);
+    }
+  };
 
   return (
     <Layout>
-      <div className="configuracion">
-        <div className="config-header">
-          <div>
-            <h1>Configuración del Sistema</h1>
-            <p>Personaliza las categorías y preferencias</p>
-          </div>
-        </div>
+      <div className="page config">
+        <PageHeader title="Configuración" subtitle="Preferencias personales y del sistema" />
 
-        {/* Tema */}
-        <Card>
-          <div className="config-section">
-            <div className="config-section-header">
-              <div>
-                <h2>Apariencia</h2>
-                <p>Cambia entre tema claro y oscuro</p>
-              </div>
-              <Button
-                variant={theme === "dark" ? "primary" : "ghost"}
-                icon={theme === "dark" ? Moon : Sun}
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? "Tema Oscuro" : "Tema Claro"}
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Categorías */}
-        {isAdmin && (
-          <Card>
-            <div className="config-section">
-              <div className="config-section-header">
+        <div className="config-grid">
+          <Card title="Mi perfil" subtitle={`${ROLE_LABELS[userData?.role] || "Usuario"} · ${currentUser?.email}`}>
+            <form onSubmit={handleSaveName} className="form-stack">
+              <Input
+                label="Nombre"
+                name="profileName"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                suffix={
+                  name.trim() !== (userData?.name || "") && (
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="sm"
+                      icon={Save}
+                      loading={savingName}
+                      aria-label="Guardar nombre"
+                      title="Guardar"
+                    />
+                  )
+                }
+              />
+              <div className="config-row">
                 <div>
-                  <h2>Categorías de Materiales</h2>
-                  <p>{categories.length} categorías configuradas</p>
+                  <p className="config-row-title">Contraseña</p>
+                  <p className="config-row-desc">Recibirás un email para crear una nueva.</p>
                 </div>
                 <Button
-                  variant="primary"
-                  icon={Plus}
-                  onClick={() => {
-                    resetForm();
-                    setShowModal(true);
-                  }}
+                  variant="secondary"
+                  icon={KeyRound}
+                  onClick={handlePasswordReset}
+                  loading={sendingReset}
                 >
-                  Nueva Categoría
+                  Cambiar
                 </Button>
               </div>
+            </form>
+          </Card>
 
-              <div className="categories-list">
-                {categories.map((category) => (
-                  <div key={category.key} className="category-item">
-                    <div className="category-info">
-                      <strong>{category.label}</strong>
-                      <span className="category-key">{category.key}</span>
-                    </div>
-                    <div className="category-actions">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={Edit}
-                        onClick={() => handleEdit(category)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={Trash2}
-                        onClick={() => handleDelete(category.key)}
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <Card title="Apariencia" subtitle="Se guarda en este navegador">
+            <div className="theme-options" role="radiogroup" aria-label="Tema">
+              {[
+                { value: "light", label: "Claro", icon: Sun },
+                { value: "dark", label: "Oscuro", icon: Moon },
+              ].map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === value}
+                  className={`theme-option theme-${value} ${theme === value ? "is-selected" : ""}`}
+                  onClick={() => setTheme(value)}
+                >
+                  <span className="theme-preview">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                  <span className="theme-option-label">
+                    <Icon size={15} /> {label}
+                  </span>
+                </button>
+              ))}
             </div>
+          </Card>
+        </div>
+
+        {isAdmin && (
+          <Card
+            title="Categorías de materiales"
+            subtitle={`${categories.length} categorías`}
+            actions={
+              <Button size="sm" icon={Plus} onClick={() => setCategoryTarget("new")}>
+                Nueva
+              </Button>
+            }
+          >
+            {categories.length === 0 ? (
+              <EmptyState compact icon={Tags} title="No hay categorías" />
+            ) : (
+              <ul className="categories-list">
+                {categories.map((cat) => {
+                  const count = usage[cat.key] || 0;
+                  return (
+                    <li key={cat.key} className="category-item">
+                      <div className="category-info">
+                        <strong>{cat.label}</strong>
+                        <span>
+                          {count} {count === 1 ? "material" : "materiales"}
+                        </span>
+                      </div>
+                      <div className="category-actions">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={Edit}
+                          onClick={() => setCategoryTarget(cat)}
+                          aria-label={`Editar ${cat.label}`}
+                          title="Editar"
+                        />
+                        <Button
+                          variant="danger-ghost"
+                          size="sm"
+                          icon={Trash2}
+                          onClick={() => setCategoryToDelete(cat)}
+                          disabled={count > 0}
+                          aria-label={`Eliminar ${cat.label}`}
+                          title={
+                            count > 0
+                              ? "No se puede eliminar: hay materiales en esta categoría"
+                              : "Eliminar"
+                          }
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Card>
         )}
 
-        {/* Modal */}
-        <Modal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            resetForm();
-          }}
-          title={editingCategory ? "Editar Categoría" : "Nueva Categoría"}
-        >
-          <form onSubmit={handleSubmit} className="category-form">
-            <Input
-              label="Identificador"
-              name="key"
-              value={formData.key}
-              onChange={(e) =>
-                setFormData({ ...formData, key: e.target.value })
-              }
-              required
-              disabled={!!editingCategory}
-              placeholder="Audio, Video, etc."
-            />
-
-            <Input
-              label="Nombre a Mostrar"
-              name="label"
-              value={formData.label}
-              onChange={(e) =>
-                setFormData({ ...formData, label: e.target.value })
-              }
-              required
-              placeholder="Audio Profesional"
-            />
-
-            <div className="modal-footer">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setShowModal(false);
-                  resetForm();
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary">
-                {editingCategory ? "Actualizar" : "Crear"} Categoría
-              </Button>
-            </div>
-          </form>
-        </Modal>
+        {isAdmin && <AlertsSettings />}
       </div>
+
+      {categoryTarget && (
+        <CategoryForm
+          category={categoryTarget === "new" ? null : categoryTarget}
+          categories={categories}
+          onSave={handleSaveCategory}
+          onClose={() => setCategoryTarget(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={Boolean(categoryToDelete)}
+        title="Eliminar categoría"
+        message={
+          <>
+            ¿Eliminar la categoría <strong>{categoryToDelete?.label}</strong>?
+          </>
+        }
+        confirmLabel="Eliminar"
+        onConfirm={handleDeleteCategory}
+        onCancel={() => setCategoryToDelete(null)}
+      />
     </Layout>
   );
 };

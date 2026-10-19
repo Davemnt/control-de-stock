@@ -1,165 +1,173 @@
-.usuarios {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.usuarios-loading {
-  display: flex;
-  flex-direction: column;
+.usuarios .toolbar {
   align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: var(--spacing-lg);
 }
 
-.usuarios-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-xl);
-  flex-wrap: wrap;
-  gap: var(--spacing-lg);
+.usuarios .chips {
+  max-width: 100%;
 }
 
-.usuarios-header h1 {
-  font-family: var(--font-bold);
-  font-size: 2rem;
-  color: var(--c-text-cream);
-  margin-bottom: var(--spacing-xs);
-}
-
-.usuarios-header p {
-  color: var(--c-text);
+.chip-count {
+  font-size: 0.7rem;
   opacity: 0.7;
-  margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 
-.usuarios-grid {
+.users-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--spacing-md);
 }
 
 .user-card {
   display: flex;
   flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.1rem 0.75rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
-.user-header {
+.user-card:hover {
+  border-color: var(--c-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.user-card.is-inactive .user-avatar,
+.user-card.is-inactive .user-info {
+  opacity: 0.55;
+}
+
+.user-card-top {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--c-border);
+  gap: 0.8rem;
 }
 
 .user-avatar {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--c-brand), #ff6a2f);
+  background: var(--c-brand-soft);
+  color: var(--c-brand);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--c-white);
+  font-weight: 700;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
 
 .user-info {
-  flex: 1;
   min-width: 0;
 }
 
 .user-info h3 {
-  font-family: var(--font-bold);
-  font-size: 1.125rem;
-  color: var(--c-text-cream);
-  margin: 0 0 var(--spacing-xs);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-email {
-  font-size: 0.875rem;
-  color: var(--c-text);
-  opacity: 0.7;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-details {
+  font-size: 0.95rem;
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.user-detail-item {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.4rem;
 }
 
-.user-detail-item .label {
-  font-size: 0.875rem;
-  color: var(--c-text);
-  opacity: 0.7;
+.user-info p {
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.user-detail-item .value {
-  font-size: 0.875rem;
-  color: var(--c-text-cream);
+.user-self {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--c-surface-hover);
+  color: var(--c-text-secondary);
+}
+
+.user-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.user-date {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
 }
 
 .user-actions {
   display: flex;
-  gap: var(--spacing-sm);
-  padding-top: var(--spacing-md);
+  gap: 2px;
+  padding-top: 0.6rem;
   border-top: 1px solid var(--c-border);
-  flex-wrap: wrap;
 }
 
-.user-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
+.user-actions > :first-child {
+  margin-right: auto;
 }
 
-.checkbox-group {
-  display: flex;
-  align-items: center;
+/* ---------- Selector de rol ---------- */
+.role-picker {
+  border: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
 }
 
-.checkbox-label {
+.role-picker legend {
+  margin-bottom: 0.4rem;
+}
+
+.role-option {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--c-text);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
+.role-option:hover {
+  background: var(--c-surface-2);
+}
+
+.role-option.is-selected {
+  border-color: var(--c-brand);
+  background: var(--c-brand-soft);
+}
+
+.role-option input {
+  margin-top: 3px;
   accent-color: var(--c-brand);
 }
 
-@media (max-width: 768px) {
-  .usuarios-header {
-    flex-direction: column;
-  }
+.role-option strong {
+  display: block;
+  font-size: 0.85rem;
+}
 
-  .usuarios-grid {
+.role-option small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--c-text-muted);
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .role-picker {
     grid-template-columns: 1fr;
   }
 
-  .user-actions {
-    flex-direction: column;
+  .usuarios .chips {
+    width: 100%;
   }
 }

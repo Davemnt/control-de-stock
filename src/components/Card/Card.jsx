@@ -1,5 +1,5 @@
-import React from 'react';
-import './Card.css';
+import React from "react";
+import "./Card.css";
 
 const Card = ({
   children,
@@ -7,11 +7,29 @@ const Card = ({
   subtitle,
   actions,
   hover = false,
-  padding = 'md',
-  className = ''
+  padding = "md",
+  className = "",
+  onClick,
+  ...rest
 }) => {
+  const interactive = typeof onClick === "function";
+
+  const handleKeyDown = (e) => {
+    if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick(e);
+    }
+  };
+
   return (
-    <div className={`card ${hover ? 'card-hover' : ''} card-padding-${padding} ${className}`}>
+    <div
+      className={`card ${hover || interactive ? "card-hover" : ""} card-padding-${padding} ${className}`}
+      onClick={onClick}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onKeyDown={interactive ? handleKeyDown : undefined}
+      {...rest}
+    >
       {(title || subtitle || actions) && (
         <div className="card-header">
           <div className="card-header-content">

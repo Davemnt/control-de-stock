@@ -365,7 +365,7 @@ async function poblarDatos() {
     console.log(`   - ${movimientosEjemplo.length} movimientos`);
     console.log(`   - 8 categorías diferentes`);
     console.log(
-      "\n🌐 Ahora puedes ver los datos en: https://control-de-stock-e4f5f.web.app\n"
+      `\n🌐 Ahora puedes ver los datos en: https://${process.env.VITE_FIREBASE_PROJECT_ID}.web.app\n`
     );
   } catch (error) {
     console.error("❌ Error al poblar datos:", error);

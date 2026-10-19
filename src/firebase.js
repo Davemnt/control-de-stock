@@ -1,6 +1,10 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, signOut } from "firebase/auth";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -11,10 +15,6 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
-
-// Log del proyecto actual para debugging
-console.log("🔥 Firebase Project:", firebaseConfig.projectId);
-console.log("🔥 Environment Mode:", import.meta.env.MODE);
 
 // Validate Firebase configuration
 const validateConfig = () => {
@@ -36,7 +36,11 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Caché persistente: los datos ya vistos siguen disponibles sin conexión y
+// las escrituras simples se sincronizan al volver la red.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
 
 // Storage is optional - initialize only if configured
 export const storage = firebaseConfig.storageBucket ? getStorage(app) : null;
@@ -47,5 +51,23 @@ if (!storage) {
     "Firebase Storage not configured. Image upload will be disabled."
   );
 }
+
+/**
+ * Ejecuta una operación con una instancia de Auth secundaria.
+ * Permite que un administrador cree cuentas nuevas sin que Firebase
+ * cierre su propia sesión (createUserWithEmailAndPassword inicia sesión
+ * automáticamente con el usuario creado).
+ */
+export const withSecondaryAuth = async (operation) => {
+  const name = "secondary-auth";
+  const secondaryApp =
+    getApps().find((a) => a.name === name) || initializeApp(firebaseConfig, name);
+  const secondaryAuth = getAuth(secondaryApp);
+  try {
+    return await operation(secondaryAuth);
+  } finally {
+    await signOut(secondaryAuth).catch(() => {});
+  }
+};
 
 export default app;

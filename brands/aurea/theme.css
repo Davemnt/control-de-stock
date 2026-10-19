@@ -1,0 +1,63 @@
+/* ==========================================================
+   MARCA AUREA
+   Colores medidos del logo y del patrón: naranja #de591f,
+   carbón #262727, crema #f0edd6.
+   Se usa ":root:root" para ganarle a los tokens base de
+   src/index.css sin depender del orden de carga.
+   ========================================================== */
+
+:root:root {
+  --font-bold: "Archivo", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --heading-stretch: 118%;
+
+  --c-brand: #de591f;
+  --c-brand-hover: #c44c17;
+  --c-brand-soft: rgba(222, 89, 31, 0.1);
+  --c-brand-strong-soft: rgba(222, 89, 31, 0.18);
+  --c-on-brand: #ffffff;
+
+  /* Neutros cálidos derivados del crema de la marca */
+  --c-body: #f4f2e7;
+  --c-surface: #fffdf7;
+  --c-surface-2: #f8f6ec;
+  --c-surface-hover: #f0edde;
+  --c-border: #e5e1cd;
+  --c-border-strong: #cfc9b1;
+  --c-text: #262727;
+  --c-text-secondary: #55554f;
+  --c-text-muted: #88887b;
+
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2355554f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  /* Menú lateral en crema de la marca */
+  --sidebar-bg: #f0edd6;
+  --sidebar-border: #e2ddc3;
+  --sidebar-hover: #e7e3c9;
+
+  --shadow-card: 0 1px 2px rgba(38, 39, 39, 0.05), 0 1px 3px rgba(38, 39, 39, 0.05);
+}
+
+:root:root[data-theme="dark"] {
+  --c-brand: #e2662f;
+  --c-brand-hover: #ec7a46;
+  --c-brand-soft: rgba(226, 102, 47, 0.16);
+  --c-brand-strong-soft: rgba(226, 102, 47, 0.24);
+
+  --c-body: #1b1c1c;
+  --c-surface: #262727;
+  --c-surface-2: #2d2e2e;
+  --c-surface-hover: #343535;
+  --c-border: #383939;
+  --c-border-strong: #474848;
+  --c-text: #f0edd6;
+  --c-text-secondary: #c9c6b0;
+  --c-text-muted: #8d8b7d;
+
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23c9c6b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+
+  --sidebar-bg: #262727;
+  --sidebar-border: #383939;
+  --sidebar-hover: #343535;
+
+  --shadow-card: none;
+}

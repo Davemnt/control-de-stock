@@ -1,778 +1,190 @@
-# 📦 Control de Stock - Sistema Profesional
+# 📦 Control de Stock
 
-<div align="center">
+**Sistema de gestión de inventario para productoras técnicas de eventos.**
+Controla equipamiento de audio, iluminación, video, rigging y estructuras: qué hay disponible, qué está en un evento, qué está en reparación y quién movió cada cosa.
 
-![Control de Stock](https://img.shields.io/badge/Version-2.0.0-orange?style=for-the-badge)
-![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react)
-![Firebase](https://img.shields.io/badge/Firebase-10.8-FFCA28?style=for-the-badge&logo=firebase)
-![Status](https://img.shields.io/badge/Status-Production-green?style=for-the-badge)
+🌐 **Producción:** <https://control-de-stock-e4f5f.web.app>
 
-**Sistema profesional de gestión de inventario para productoras técnicas de eventos**
-
-[🏭 Producción](https://control-de-stock-e4f5f.web.app) • [🎭 Demo](https://control-stock-demo.web.app) • [📋 Portfolio](./PORTFOLIO.md) • [💼 Presupuesto](./PRESUPUESTO_CLIENTE.md)
-
-</div>
+- **Manual para usuarios:** [docs/MANUAL_DE_USO.md](docs/MANUAL_DE_USO.md)
+- **Entregar la app a un cliente:** [docs/ENTREGA_CLIENTE.md](docs/ENTREGA_CLIENTE.md)
+- **Marca visual por cliente (logo, colores, fondo del login):** [brands/README.md](brands/README.md)
 
 ---
 
-## 🌐 Versiones Disponibles
+## ✨ Funcionalidades
 
-### 🏭 **Versión PRODUCCIÓN**
+- **Inventario**
+  - Tarjetas o lista, con foto de cada material.
+  - Búsqueda y filtros por categoría, estado y nivel de stock.
+  - Stock mínimo configurable por material.
+- **Movimientos**
+  - Entradas, salidas a eventos, devoluciones, envíos y retornos de reparación, transferencias, bajas y ajustes.
+  - El stock se recalcula solo, dentro de una transacción, así dos usuarios a la vez no se pisan.
+- **Historial auditable** con filtros por material, tipo, usuario y fechas.
+- **Escaneo de códigos de barras y QR** con la cámara del móvil, o por teclado y lector USB.
+- **Exportación a Excel y PDF** del inventario, del historial y un reporte por material.
+- **Dashboard**
+  - Métricas.
+  - Materiales que requieren atención.
+  - Actividad reciente.
+- **Tiempo real:** los cambios de otros usuarios aparecen sin recargar.
+- **Eventos en lote:** salida de muchos equipos a un evento de una vez y devolución marcando lo que volvió; control de lo pendiente por evento.
+- **Indicadores:** movimientos, unidades enviadas, tasa de devolución, bajas, actividad por tipo, material y usuario.
+- **Corrección de errores:** el admin corrige motivo, proyecto y notas de un movimiento, o lo anula (el stock se restaura y queda registrado).
+- **Etiquetas con QR** en PDF (hoja A4 de 24 o etiqueta individual 62 × 29 mm).
+- **Importación desde Excel** con plantilla, vista previa y validación por fila.
+- **Avisos por email** de stock bajo (con la extensión *Trigger Email* de Firebase).
+- **Sin conexión:** app instalable (PWA); consulta los datos cargados sin señal.
+- **Usuarios y roles**, recuperación de contraseña por email y cierre de sesión tras 30 min de inactividad.
+- **Tema claro y oscuro**, diseño adaptado a móvil.
 
-**URL:** https://control-de-stock-e4f5f.web.app  
-**Base de Datos:** Datos reales del cliente (privada y segura)  
-**Acceso:** Restringido - Solo personal autorizado
+## 👥 Roles
 
-### 🎭 **Versión DEMO**
+| Acción | Admin | Empleado | Encargado de stock | Invitado |
+| --- | :-: | :-: | :-: | :-: |
+| Ver inventario, historial y dashboard | ✅ | ✅ | ✅ | ✅ |
+| Registrar movimientos | ✅ | ✅ | ✅ | — |
+| Crear materiales | ✅ | ✅ | — | — |
+| Editar y eliminar materiales | ✅ | — | — | — |
+| Bajas y ajustes de stock | ✅ | — | — | — |
+| Gestionar usuarios y categorías | ✅ | — | — | — |
 
-**URL:** https://control-stock-demo.web.app  
-**Base de Datos:** Completamente separada con datos ficticios  
-**Acceso:** Público - Pruebas y demostraciones  
-**Credenciales:** demo@demo.com / demo123
+## 📊 Modelo de stock
 
-> ⚠️ **IMPORTANTE:** Ambas versiones están en proyectos Firebase completamente separados. No comparten información alguna.
+Cada material tiene tres cantidades:
 
----
+- **Disponible**: en depósito.
+- **En uso**: en eventos o préstamos.
+- **Mantenimiento**: en reparación.
 
-## 🌟 Sobre el Proyecto
+| Movimiento | Efecto |
+| --- | --- |
+| Entrada | + disponible |
+| Salida | disponible → en uso |
+| Devolución | en uso → disponible |
+| Envío a reparación | disponible → mantenimiento |
+| Retorno de reparación | mantenimiento → disponible |
+| Transferencia | cambia la ubicación |
+| Baja | − disponible (definitivo) |
+| Ajuste | fija el disponible a un valor (recuento físico) |
 
-Control de Stock es una aplicación web profesional diseñada específicamente para productoras técnicas de eventos. Permite gestionar inventario de equipamiento profesional con trazabilidad completa, control de roles, escaneo de códigos de barras y exportación de reportes PDF.
-
-### 🎯 Problema que Resuelve
-
-En eventos profesionales, el control de equipamiento técnico (audio, iluminación, video, rigging) es crítico. Este sistema:
-
-- ✅ Elimina pérdidas por falta de trazabilidad
-- ✅ Optimiza la gestión de stock en tiempo real
-- ✅ Reduce errores humanos en inventarios
-- ✅ Proporciona auditoría completa de movimientos
-- ✅ Facilita la gestión multi-usuario con permisos
-- ✅ **Permite trabajar con múltiples usuarios simultáneamente**
-- ✅ **Cierra sesión automáticamente al cerrar el navegador**
-- ✅ **Soporta imágenes de materiales con compresión automática**
-
----
-
-## 🚀 Características Principales
-
-### 🔐 Sistema de Autenticación Robusto
-
-- Autenticación con Firebase Authentication
-- 3 niveles de permisos: **Admin**, **Usuario**, **Invitado (Demo)**
-- Sesiones seguras con tokens JWT
-- **✨ Cierre automático al cerrar navegador**
-- **✨ Soporte para múltiples usuarios simultáneos**
-- Protección contra inspección de código
-
-### 📦 Gestión Integral de Materiales
-
-- 8 categorías profesionales específicas para eventos
-- Campos personalizables: código, ubicación, estado, cantidad
-- Seguimiento de materiales en mantenimiento, comprometidos y disponibles
-- **✨ Carga de imágenes con compresión automática (base64)**
-- Subcategorías personalizadas
-
-### 📊 Dashboard Visual e Intuitivo
-
-- Métricas en tiempo real del stock
-- Alertas de stock bajo y materiales en mantenimiento
-- Últimos movimientos registrados
-- Vista personalizada según rol del usuario
-
-### 🔄 Registro de Movimientos Auditado
-
-- 3 tipos: Entrada, Salida, Ajuste
-- Historial completo (auditable)
-- Registro automático de usuario y timestamp
-- Campos: motivo, cantidad, ubicación
-- Filtros avanzados por fecha, usuario, tipo
-
-### 📱 Escaneo de Códigos de Barras
-
-- Escaneo directo con cámara del dispositivo
-- Soporta 7 formatos (CODE_128, CODE_39, EAN_13, EAN_8, UPC_A, UPC_E, QR_CODE)
-- Integrado en formularios de materiales
-- Compatible con móviles y tablets
-
-### 📄 Exportación a PDF Profesional
-
-- Generación de reportes en PDF con diseño profesional
-- Exportación de catálogo completo o filtrado
-- Tablas formateadas con colores corporativos
-- Descarga automática con nombre descriptivo
-
-### 👥 Gestión de Usuarios (Solo Admin)
-
-- Crear, editar usuarios
-- Asignación de roles y permisos
-- **✨ Soporte para múltiples empleados trabajando simultáneamente**
-- Control de accesos granular
-
-### 🎯 Modo Demostración
-
-- Base de datos completamente separada
-- 10+ materiales de ejemplo pre-cargados
-- Banner visual indicando modo demo
-- Ideal para capacitaciones y presentaciones
+Al crear un material con stock inicial se registra una *Entrada*. Si un admin edita el stock a mano, se registra un *Ajuste*.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Stack
 
-### Frontend
+- **Frontend:** React 18, Vite 6, React Router 7, lucide-react, react-hot-toast.
+- **Backend:** Firebase 12 (Authentication, Firestore y Hosting).
+- **Escaneo:** html5-qrcode.
+- **Exportación:** jsPDF + autotable para PDF, SheetJS (xlsx) para Excel. Ambas librerías se cargan solo cuando se usan.
 
-- **React 18.2** - Framework JavaScript moderno
-- **Vite 5.1** - Build tool ultrarrápido con HMR
-- **React Router 6** - Navegación SPA
-- **Lucide React** - Iconografía profesional
-- **React Hot Toast** - Notificaciones elegantes
+## 🚀 Puesta en marcha
 
-### Backend & Base de Datos
-
-- **Firebase Authentication** - Sistema de autenticación seguro
-- **Cloud Firestore** - Base de datos NoSQL en tiempo real
-- **Firebase Hosting** - Hosting web con CDN global y SSL
-
-### Librerías Adicionales
-
-- **html5-qrcode 2.3.8** - Escaneo de códigos de barras y QR
-- **jsPDF + jsPDF-AutoTable** - Exportación de reportes PDF
-
----
-
-## 🎨 Diseño y UX
-
-### Paleta de Colores
-
-```css
---c-brand: #de591f      /* Naranja principal */
---c-body: #262727       /* Fondo oscuro */
---c-surface: #323333    /* Superficies */
---c-text: #f6f6f6       /* Texto principal */
---c-success: #4ade80    /* Verde éxito */
---c-error: #ef4444      /* Rojo error */
-```
-
-### Características de Diseño
-
-- 🌙 **Dark Theme** profesional y elegante
-- 📱 **Mobile-First** - Totalmente responsive
-- ⚡ **Micro-interacciones** - Feedback visual inmediato
-- ♿ **Accesible** - Contraste WCAG AA
-- 🎯 **Minimalista** - UI limpia sin distracciones
-
----
-
-## 📦 Categorías de Materiales
-
-El sistema está optimizado para 8 categorías profesionales:
-
-| Categoría                | Ejemplos                        | Uso Principal        |
-| ------------------------ | ------------------------------- | -------------------- |
-| 🎵 **Audio**             | Consolas, micrófonos, speakers  | Sistemas de sonido   |
-| 💡 **Iluminación**       | Moving heads, PAR LED, consolas | Diseño lumínico      |
-| 📹 **Video**             | LED walls, cámaras, proyectores | Pantallas y mapping  |
-| ⚙️ **Rigging**           | Motores, cadenas, trusses       | Estructuras elevadas |
-| 🏗️ **Estructuras**       | Escenarios, tarimas, gradas     | Montaje físico       |
-| 🔌 **Cables**            | Multipar, DMX, energía          | Conectividad         |
-| 🎒 **Mochilas Técnicas** | Kits de herramientas            | Mantenimiento        |
-| 🔧 **Repuestos**         | Lámparas, fusibles, conectores  | Reemplazos           |
-
----
-
-## 📱 Roles y Permisos
-
-### 👑 Administrador
-
-```
-✅ Acceso total al sistema
-✅ Crear/editar/eliminar usuarios
-✅ Gestionar materiales (CRUD completo)
-✅ Registrar movimientos
-✅ Ver historial completo
-✅ Exportar reportes
-✅ Subir imágenes de materiales
-```
-
-### 👤 Usuario Estándar
-
-```
-✅ Ver stock completo
-✅ Registrar movimientos (entrada/salida)
-✅ Ver historial completo
-✅ Buscar y filtrar materiales
-✅ Exportar reportes
-⛔ No puede crear usuarios
-⛔ No puede eliminar materiales
-```
-
-### 👁️ Invitado (Demo)
-
-```
-✅ Solo consulta de stock demo
-✅ Ver estado de materiales
-✅ Búsqueda básica
-✅ Exportar reportes
-⛔ No puede modificar nada
-⛔ Solo lectura
-```
-
----
-
-## 🎬 Demo en Vivo
-
-### 🔗 Acceso al Sistema
-
-**🌐 URL:** https://control-de-stock-e4f5f.web.app
-
-### 🔐 Credenciales
-
-**Administrador:**
-
-```
-Email: montedavid07@hotmail.com
-Password: Moroni1032!
-```
-
-**Modo Demostración:**
-
-```
-Email: demo@demo.com
-Password: demo123
-```
-
----
-
-## 📋 Guía de Inicio Rápido
-
-### Requisitos Previos
-
-- **Node.js 18+** - [Descargar aquí](https://nodejs.org/)
-- **Git** - [Descargar aquí](https://git-scm.com/)
-- **Cuenta de Firebase** - [Crear cuenta gratis](https://firebase.google.com/)
-
-### Instalación Local
-
-```bash
-# 1. Clonar repositorio
-git clone https://github.com/Davemnt/control-de-stock.git
-cd control-de-stock
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Configurar variables de entorno
-# Crear archivo .env con tus credenciales de Firebase
-
-# 4. Ejecutar en desarrollo
-npm run dev
-
-# 5. Abrir en navegador
-# http://localhost:5173
-```
-
-### Variables de Entorno (.env)
-
-```env
-VITE_FIREBASE_API_KEY=tu-api-key
-VITE_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=tu-proyecto-id
-VITE_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=tu-sender-id
-VITE_FIREBASE_APP_ID=tu-app-id
-```
-
----
-
-## 🚀 Build para Producción
-
-```bash
-# Construir aplicación optimizada
-npm run build
-
-# Los archivos estarán en /dist
-```
-
-### Deploy en Firebase Hosting
-
-```bash
-# Instalar Firebase CLI
-npm install -g firebase-tools
-
-# Login
-firebase login
-
-# Inicializar
-firebase init hosting
-
-# Desplegar
-firebase deploy --only hosting
-```
-
----
-
-## 📚 Documentación Adicional
-
-- 📋 **[PORTFOLIO.md](./PORTFOLIO.md)** - Portfolio técnico completo del proyecto
-- 💼 **[PRESUPUESTO_CLIENTE.md](./PRESUPUESTO_CLIENTE.md)** - Presupuesto comercial detallado
-- 🔐 **[firestore.rules](./firestore.rules)** - Reglas de seguridad de Firestore
-- 📜 **[scripts/](./scripts/)** - Scripts de administración y utilidades
-
----
-
-## 🛠️ Scripts Disponibles
-
-```bash
-npm run dev        # Servidor de desarrollo
-npm run build      # Build de producción
-npm run preview    # Preview del build
-npm run lint       # Linter de código
-```
-
-### Scripts de Administración
-
-```bash
-# Crear materiales de ejemplo
-node scripts/createAdminMaterials.mjs
-
-# Limpiar datos demo
-node scripts/cleanDemoData.mjs
-
-# Cambiar email del admin
-node scripts/cambiarEmailAdmin.mjs
-
-# Reactivar cuenta original
-node scripts/reactivarCuentaOriginal.mjs
-```
-
----
-
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Para cambios importantes:
-
-1. Fork el proyecto
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit: `git commit -m 'Add: nueva funcionalidad'`
-4. Push: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-Este proyecto es de código propietario. © 2025 David Montenegro.
-
----
-
-## 👨‍💻 Autor
-
-**David Montenegro**
-
-- Email: montedavid07@hotmail.com
-- GitHub: [@Davemnt](https://github.com/Davemnt)
-- LinkedIn: [Tu perfil]
-
----
-
-## 🙏 Tecnologías Utilizadas
-
-- [React](https://react.dev/) - Framework de UI
-- [Firebase](https://firebase.google.com/) - Backend as a Service
-- [Vite](https://vitejs.dev/) - Build tool
-- [Lucide](https://lucide.dev/) - Iconos
-- [html5-qrcode](https://github.com/mebjas/html5-qrcode) - Escaneo de códigos
-- [jsPDF](https://github.com/parallax/jsPDF) - Generación de PDFs
-
----
-
-## 📊 Estadísticas del Proyecto
-
-- 📅 **Tiempo de Desarrollo:** 4 semanas
-- 💻 **Líneas de Código:** ~8,500
-- 🧩 **Componentes React:** 25+
-- 📄 **Páginas:** 7 principales
-- ⚡ **Performance:** Lighthouse 90+
-- 🌐 **Deploy:** Firebase Hosting
-
----
-
-<div align="center">
-
-**⭐ Si te gustó este proyecto, dale una estrella en GitHub ⭐**
-
-**Estado:** ✅ En Producción | **Versión:** 2.0.0 | **Última actualización:** Diciembre 2025
-
-Hecho con ❤️ por David Montenegro
-
-</div>
-
----
-
-## 🌟 Sobre el Proyecto
-
-Control de Stock es una aplicación web profesional diseñada específicamente para productoras técnicas de eventos internacionales. Permite gestionar inventario de equipamiento profesional con trazabilidad completa, control de roles y auditoría de movimientos.
-
-### 🎯 Problema que Resuelve
-
-En eventos masivos, el control de equipamiento técnico (audio, iluminación, video, rigging) es crítico. Este sistema:
-
-- ✅ Elimina pérdidas por falta de trazabilidad
-- ✅ Optimiza la gestión de stock en tiempo real
-- ✅ Reduce errores humanos en inventarios
-- ✅ Proporciona auditoría completa de movimientos
-- ✅ Facilita la gestión multi-usuario con permisos
-
----
-
-## 🚀 Características Principales
-
-### 🔐 Sistema de Autenticación Robusto
-
-- Autenticación con Firebase Authentication
-- 3 niveles de permisos: **Admin**, **Usuario**, **Invitado**
-- Sesiones seguras con tokens JWT
-- Validación de permisos en tiempo real
-
-### 📦 Gestión Integral de Materiales
-
-- 8 categorías profesionales específicas para eventos
-- Campos personalizables: código, ubicación, estado, cantidad
-- Seguimiento de materiales en mantenimiento, comprometidos y disponibles
-- Carga de imágenes y documentos adjuntos
-- Subcategorías y etiquetas personalizadas
-
-### 📊 Dashboard Visual e Intuitivo
-
-- Métricas en tiempo real del stock
-- Alertas de stock bajo y materiales en mantenimiento
-- Gráficos de uso por categoría
-- Resumen de movimientos del día
-- Vista personalizada según rol del usuario
-
-### 🔄 Registro de Movimientos Auditado
-
-- 4 tipos: Entrada, Salida, Transferencia, Ajuste
-- Historial inmutable (no editable una vez guardado)
-- Firma digital con usuario y timestamp
-- Campos obligatorios: motivo, cantidad, ubicación
-- Filtros avanzados por fecha, usuario, tipo
-
-### 📈 Historial Completo y Trazabilidad
-
-- Seguimiento completo de cada material desde su ingreso
-- Línea de tiempo visual de movimientos
-- Exportación de reportes en PDF y Excel
-- Búsqueda avanzada con múltiples filtros
-
-### 📱 Escaneo de Códigos de Barras ⭐ NUEVO
-
-- Escaneo directo con cámara del dispositivo
-- Soporta múltiples formatos (Code 128, EAN, QR)
-- Integrado en formularios de materiales
-- Compatible con móviles y tablets
-
-### 📄 Exportación a PDF Profesional ⭐ NUEVO
-
-- Generación de reportes en PDF con diseño profesional
-- Exportación de inventario completo o filtrado
-- Historial de movimientos en PDF
-- Tablas formateadas con resúmenes estadísticos
-
-### 👥 Gestión de Usuarios (Solo Admin)
-
-- Crear, editar, activar/desactivar usuarios
-- Asignación de roles y permisos
-- Registro de última actividad
-- Control de accesos granular
-
----
-
-## 🛠️ Stack Tecnológico
-
-### Frontend
-
-- **React 18.2** - Librería de UI moderna y eficiente
-- **Vite 5.1** - Build tool ultrarrápido con HMR
-- **React Router DOM 6.22** - Enrutamiento SPA
-- **Lucide React** - Librería de iconos profesionales
-- **date-fns** - Manejo robusto de fechas
-
-### Backend & Base de Datos
-
-- **Firebase Authentication** - Sistema de autenticación seguro
-- **Cloud Firestore** - Base de datos NoSQL en tiempo real
-- **Firebase Storage** - Almacenamiento de imágenes (opcional)
-- **Firebase Security Rules** - Reglas de seguridad server-side
-
-### Librerías Adicionales
-
-- **html5-qrcode** - Escaneo de códigos de barras y QR
-- **jsPDF + jsPDF-AutoTable** - Exportación de reportes PDF
-- **XLSX** - Exportación de reportes Excel
-- **React Hot Toast** - Sistema de notificaciones elegante
-
----
-
-## 🎨 Diseño y UX
-
-### Paleta de Colores
-
-```css
---c-brand: #de591f      /* Naranja principal */
---c-body: #262727       /* Fondo oscuro */
---c-surface: #2e2f2f    /* Superficies */
---c-text: #e8e9ea       /* Texto principal */
---c-success: #10b981    /* Verde éxito */
---c-error: #ef4444      /* Rojo error */
-```
-
-### Características de Diseño
-
-- 🌙 **Dark Theme** profesional y elegante
-- 📱 **Mobile-First** - Totalmente responsive
-- ⚡ **Micro-interacciones** - Feedback visual inmediato
-- ♿ **Accesible** - Contraste WCAG AA
-- 🎯 **Minimalista** - UI limpia sin distracciones
-
----
-
-## 📦 Categorías de Materiales
-
-El sistema está optimizado para 8 categorías profesionales:
-
-| Categoría                | Ejemplos                        | Uso Principal        |
-| ------------------------ | ------------------------------- | -------------------- |
-| 🎵 **Audio**             | Consolas, micrófonos, speakers  | Sistemas de sonido   |
-| 💡 **Iluminación**       | Moving heads, PAR LED, consolas | Diseño lumínico      |
-| 📹 **Video**             | LED walls, cámaras, proyectores | Pantallas y mapping  |
-| ⚙️ **Rigging**           | Motores, cadenas, trusses       | Estructuras elevadas |
-| 🏗️ **Estructuras**       | Escenarios, tarimas, gradas     | Montaje físico       |
-| 🔌 **Cables**            | Multipar, DMX, energía          | Conectividad         |
-| 🎒 **Mochilas Técnicas** | Kits de herramientas            | Mantenimiento        |
-| 🔧 **Repuestos**         | Lámparas, fusibles, conectores  | Reemplazos           |
-
----
-
-## 📱 Roles y Permisos
-
-### 👑 Administrador
-
-```
-✅ Acceso total al sistema
-✅ Crear/editar/eliminar usuarios
-✅ Gestionar materiales (CRUD completo)
-✅ Registrar movimientos
-✅ Ver historial completo
-✅ Exportar reportes
-✅ Configuración del sistema
-```
-
-### 👤 Usuario Estándar
-
-```
-✅ Ver stock completo
-✅ Registrar movimientos (entrada/salida)
-✅ Cargar notas y observaciones
-✅ Buscar y filtrar materiales
-⛔ No puede crear usuarios
-⛔ No puede eliminar materiales
-```
-
-### 👁️ Invitado/Técnico
-
-```
-✅ Solo consulta de stock
-✅ Ver estado de materiales
-✅ Búsqueda básica
-⛔ No puede modificar nada
-⛔ No puede ver reportes
-```
-
----
-
-## 📋 Guía de Instalación Paso a Paso
-
-### Requisitos Previos
-
-- **Node.js 18+** - [Descargar aquí](https://nodejs.org/)
-- **Git** - [Descargar aquí](https://git-scm.com/)
-- **Cuenta de Firebase** - [Crear cuenta gratis](https://firebase.google.com/)
-
-### Paso 1: Clonar el Repositorio
+Requisitos: Node.js 18 o superior y un proyecto de Firebase con **Authentication (Email/Password)** y **Firestore** habilitados.
 
 ```bash
 git clone https://github.com/Davemnt/control-de-stock.git
 cd control-de-stock
-```
-
-### Paso 2: Instalar Dependencias
-
-```bash
 npm install
+cp .env.example .env     # completar con las claves de Firebase
+npm run dev              # http://localhost:3000
 ```
 
-### Paso 3: Configurar Firebase
+Las claves están en Firebase Console → ⚙️ Configuración del proyecto → *Tus apps* → *Configuración del SDK*:
 
-1. **Crear Proyecto en Firebase:**
-
-   - Ve a [Firebase Console](https://console.firebase.google.com/)
-   - Clic en "Agregar proyecto"
-   - Nombre: `control-stock-eventos`
-   - Desactiva Google Analytics (opcional)
-
-2. **Activar Authentication:**
-
-   - En el menú: Build → Authentication
-   - Clic en "Comenzar"
-   - Habilita: **Email/Password**
-
-3. **Crear Firestore Database:**
-
-   - En el menú: Build → Firestore Database
-   - Clic en "Crear base de datos"
-   - Modo: **Producción**
-   - Ubicación: `southamerica-east1` (São Paulo)
-
-4. **Obtener Credenciales:**
-   - Clic en el ícono ⚙️ → Configuración del proyecto
-   - Scroll a "Tus aplicaciones" → clic en ícono Web `</>`
-   - Copia el objeto `firebaseConfig`
-
-### Paso 4: Configurar Variables de Entorno
-
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-VITE_FIREBASE_API_KEY=tu-api-key-aqui
-VITE_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=tu-proyecto-id
-VITE_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:abcdef123456
+```dotenv
+VITE_APP_NAME=Control de Stock     # opcional: nombre que se muestra en la app
+VITE_COMPANY_NAME=                 # opcional: empresa (subtítulo, pie, PDF)
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
 ```
 
-### Paso 5: Configurar Reglas de Seguridad
+### Comandos
 
-1. En Firestore Database → pestaña **Rules**
-2. Copia el contenido de `firestore.rules` del proyecto
-3. Pégalo y haz clic en **Publicar**
+| Comando | Descripción |
+| --- | --- |
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción en `dist/` |
+| `npm run preview` | Sirve el build localmente |
+| `npm run lint` | ESLint |
+| `npm run deploy` | Compila y publica app + reglas en el proyecto de `.env` |
+| `npm run deploy -- acme` | Lo mismo para el cliente `acme` (usa `.env.acme`) |
+| `npm run cliente:nuevo` | Crea la configuración de un cliente nuevo |
+| `npm run admin:crear [-- acme]` | Crea el primer administrador |
 
-### Paso 6: Crear Usuario Administrador
+En Windows también puedes usar `deploy-produccion.bat [cliente]` y `create-admin.bat [cliente]`.
 
-**Opción A: Desde Firebase Console**
+## 🔑 Administración y acceso
 
-1. Authentication → Users → Add user
-2. Email: `admin@tuempresa.com`
-3. Password: Mínimo 8 caracteres
-4. Copia el **UID** del usuario
-5. En Firestore → Colección `users` → Nuevo documento
-6. Document ID: El UID copiado
-7. Campos:
-   ```
-   email: "admin@tuempresa.com"
-   name: "Administrador"
-   role: "admin"
-   active: true
-   createdAt: [timestamp actual]
-   ```
+- **Primer administrador:** `npm run admin:crear` (para un cliente: `npm run admin:crear -- acme`). Te pide email y contraseña. Sólo funciona mientras no exista ningún admin: en cuanto un admin inicia sesión, la app crea `system/bootstrap` y desde entonces los usuarios se crean desde la pantalla Usuarios.
+- **Olvidé la contraseña:** en el login pulsa *¿Olvidaste tu contraseña?*. También puedes hacerlo desde Firebase Console → Authentication → Usuarios.
+- **Otros scripts en `scripts/`** (además de `deploy.mjs`, `nuevoCliente.mjs` y `createAdmin.mjs`):
+  - `cambiarEmailAdmin.mjs`: migra el admin a otro email.
+  - `deleteUserCompletely.mjs`: elimina un usuario.
+  - `poblarDatos.mjs` y `poblarDatosAdmin.mjs`: cargan materiales de ejemplo.
+  - `createAdminMaterials.mjs`: igual que los anteriores, pero iniciando sesión como admin.
 
-### Paso 7: Ejecutar el Proyecto
+## 📤 Publicar cambios
 
 ```bash
-npm run dev
+firebase login                  # una vez, con la cuenta que tiene acceso al proyecto
+npm run deploy                  # tu instalación: app + reglas de seguridad
+npm run deploy -- acme          # la instalación de un cliente
+npm run deploy -- acme --solo-app   # sólo la app, sin tocar las reglas
 ```
 
-Abre: **http://localhost:3000**
+El proyecto de destino sale del propio archivo `.env`, y la publicación se detiene si al archivo le falta alguna clave de Firebase. Así nunca se publica la app de un cliente en el proyecto de otro.
 
----
+La primera vez que publiques las reglas, **inicia sesión como administrador** en la app: eso cierra la creación libre del primer admin.
 
-## 🎬 Demo
+### Avisos por email (opcional)
 
-### 🔗 Enlaces del Proyecto
+1. En Firebase Console, pasa el proyecto al plan **Blaze** (pago por uso; el envío de avisos cuesta prácticamente cero).
+2. Instala la extensión **Trigger Email from Firestore**, con la colección `mail` y los datos SMTP de tu correo (por ejemplo, Gmail con contraseña de aplicación).
+3. En la app: Configuración → *Avisos de stock bajo por email* → activar y poner los destinatarios.
 
-- **Demo en Vivo:** [https://control-stock-eventos.web.app](https://control-stock-eventos.web.app) _(próximamente)_
-- **Repositorio GitHub:** [https://github.com/Davemnt/control-de-stock](https://github.com/Davemnt/control-de-stock)
-- **Documentación Completa:** [Ver docs](./FIREBASE_SETUP_GUIDE.md)
-- **Guía de Inicio Rápido:** [Ver guía](./QUICK_START.md)
+> ⚠️ Nunca guardes contraseñas dentro de scripts o documentos del repositorio.
 
-### 🎥 Video Demo
+## 📁 Estructura
 
-_[Próximamente - Video demostrativo en YouTube]_
-
----
-
-## 🚀 Build para Producción
-
-```bash
-npm run build
+```text
+src/
+├── components/   # UI reutilizable: Button, Input, Modal, ConfirmDialog, Layout, Sidebar, BarcodeScanner...
+├── contexts/     # AuthContext (sesión y roles), ThemeContext (claro/oscuro)
+├── hooks/        # useFirestore: suscripciones en tiempo real (materiales, movimientos, usuarios, categorías)
+├── pages/        # Login, Dashboard, Materiales, Movimientos, Historial, Indicadores, Usuarios, Configuracion
+├── utils/        # stock.js (movimientos y anulaciones), analytics (indicadores), importMaterials,
+│                 # labelsPdf (etiquetas QR), alerts (avisos email), exportExcel, pdfExport...
+├── constants/    # roles, estados, tipos de movimiento, permisos
+├── config/       # branding.js: nombre, empresa y marca visual (desde .env)
+├── firebase.js   # inicialización de Firebase
+└── index.css     # tokens de diseño (colores, espaciado) y estilos globales
 ```
 
-Los archivos optimizados estarán en `/dist`
+**Colecciones de Firestore:**
 
-### Deploy en Firebase Hosting
+- `users`: perfil y rol; el id del documento es el uid de Auth.
+- `materials`: los materiales del inventario.
+- `movements`: el historial de movimientos.
+- `system/categories`: las categorías configurables.
+- `system/alerts`: los avisos por email (activado y destinatarios).
+- `system/bootstrap`: indica que ya existe un admin.
+- `mail`: la cola de emails de la extensión *Trigger Email*.
 
-```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting
-firebase deploy
-```
+## 🔒 Seguridad
 
----
-
-## 📚 Documentación
-
-- 📖 [Guía Completa de Firebase](./FIREBASE_SETUP_GUIDE.md)
-- 🚀 [Inicio Rápido](./QUICK_START.md)
-- ⚙️ [Configuración Avanzada](./SETUP.md)
-- 🎯 [Características Detalladas](./FEATURES.md)
-- 💡 [Ejemplos de Uso](./EXAMPLES.md)
-- 🚢 [Guía de Deploy](./DEPLOYMENT.md)
+- **Reglas de Firestore por rol** (`firestore.rules`):
+  - Cada rol sólo puede hacer lo que la app le permite, aunque use la API de Firebase directamente.
+  - El stock de un material sólo lo cambian los movimientos.
+  - Nadie puede asignarse un rol a sí mismo.
+  - Los movimientos nunca se borran.
+- **`public/security.js`:** sólo se aplica fuera de `localhost`. Su detección de DevTools puede dar falsos positivos (por ejemplo, con la barra lateral del navegador abierta).
 
 ---
 
-## 🤝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit: `git commit -m 'Add: nueva funcionalidad'`
-4. Push: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-MIT License - Ver [LICENSE](./LICENSE) para más detalles.
-
----
-
-## 👨‍💻 Autor
-
-**David Monte**
-
-- GitHub: [@Davemnt](https://github.com/Davemnt)
-- Portfolio: [tu-portfolio.com](#)
-- LinkedIn: [David Monte](https://linkedin.com/in/tu-perfil)
-
----
-
-## 🙏 Agradecimientos
-
-- [Firebase](https://firebase.google.com/) por la infraestructura backend
-- [React](https://react.dev/) por la librería de UI
-- [Vite](https://vitejs.dev/) por el build tool
-- [Lucide](https://lucide.dev/) por los iconos
-
----
-
-<div align="center">
-
-**⭐ Si te gustó este proyecto, dale una estrella en GitHub ⭐**
-
-Hecho con ❤️
-
-</div>
+👨‍💻 **David Monte** · [@Davemnt](https://github.com/Davemnt)
