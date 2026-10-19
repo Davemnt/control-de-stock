@@ -1,9 +1,0 @@
-node_modules/
-temp/
-logs/
-*.log
-.env
-.env.local
-*.json.backup
-dist/
-build/
