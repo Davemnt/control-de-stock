@@ -10,23 +10,37 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
     monospace;
 
-  /* Marca */
-  --c-brand: #e2571c;
-  --c-brand-hover: #c9490f;
-  --c-brand-soft: rgba(226, 87, 28, 0.09);
-  --c-brand-strong-soft: rgba(226, 87, 28, 0.16);
+  /* Marca: azul profesional */
+  --c-brand: #2f5bea;
+  --c-brand-hover: #2349c7;
+  --c-brand-light: #5b84ff;
+  --c-brand-soft: rgba(47, 91, 234, 0.09);
+  --c-brand-strong-soft: rgba(47, 91, 234, 0.16);
   --c-on-brand: #ffffff;
 
-  /* Tema claro (por defecto) */
-  --c-body: #f3f4f6;
+  /* Tema claro (por defecto): grises fríos */
+  --c-body: #f4f6fb;
   --c-surface: #ffffff;
-  --c-surface-2: #f8f9fb;
-  --c-surface-hover: #f0f2f5;
-  --c-border: #e5e7eb;
-  --c-border-strong: #d1d5db;
-  --c-text: #111827;
-  --c-text-secondary: #4b5563;
-  --c-text-muted: #8a909a;
+  --c-surface-2: #f8f9fd;
+  --c-surface-hover: #eef1f8;
+  --c-border: #e3e7f0;
+  --c-border-strong: #cfd6e4;
+  --c-text: #111a33;
+  --c-text-secondary: #475069;
+  --c-text-muted: #8590a6;
+
+  /* Menú lateral: azul noche */
+  --sidebar-bg: #0f1b3d;
+  --sidebar-border: #0f1b3d;
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-divider: rgba(255, 255, 255, 0.08);
+  --sidebar-text: #ffffff;
+  --sidebar-text-secondary: #b7c2dd;
+  --sidebar-text-muted: #7d8bb0;
+  --sidebar-active-bg: rgba(91, 132, 255, 0.2);
+  --sidebar-active-text: #ffffff;
+  --sidebar-active-bar: #5b84ff;
+  --sidebar-danger: #ff8f85;
 
   --c-success: #12875a;
   --c-success-soft: rgba(18, 135, 90, 0.1);
@@ -34,17 +48,17 @@
   --c-warning-soft: rgba(217, 119, 6, 0.12);
   --c-error: #d33a2c;
   --c-error-soft: rgba(211, 58, 44, 0.09);
-  --c-info: #2563eb;
-  --c-info-soft: rgba(37, 99, 235, 0.09);
+  --c-info: #0284c7;
+  --c-info-soft: rgba(2, 132, 199, 0.1);
   --c-purple: #7c3aed;
   --c-purple-soft: rgba(124, 58, 237, 0.09);
 
-  --c-overlay: rgba(17, 24, 39, 0.42);
+  --c-overlay: rgba(15, 27, 61, 0.45);
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 
   /* Alias heredados (usados por componentes antiguos) */
   --c-white: #ffffff;
-  --c-dark: #111827;
+  --c-dark: #111a33;
   --c-text-cream: var(--c-text);
   --c-surface-light: var(--c-surface-hover);
 
@@ -58,9 +72,9 @@
 
   /* Radios */
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-full: 999px;
 
   /* Sombras */
@@ -94,20 +108,24 @@
 
 /* Tema oscuro (opcional, se elige en Configuración) */
 [data-theme="dark"] {
-  --c-brand: #e5622a;
-  --c-brand-hover: #f07440;
-  --c-brand-soft: rgba(229, 98, 42, 0.14);
-  --c-brand-strong-soft: rgba(229, 98, 42, 0.22);
+  --c-brand: #5b84ff;
+  --c-brand-hover: #7a9cff;
+  --c-brand-light: #8aa8ff;
+  --c-brand-soft: rgba(91, 132, 255, 0.14);
+  --c-brand-strong-soft: rgba(91, 132, 255, 0.22);
 
-  --c-body: #141517;
-  --c-surface: #1c1d20;
-  --c-surface-2: #232428;
-  --c-surface-hover: #2a2c31;
-  --c-border: #2c2e33;
-  --c-border-strong: #3a3d43;
-  --c-text: #ececee;
-  --c-text-secondary: #a3a6ad;
-  --c-text-muted: #6f737a;
+  --c-body: #0b1120;
+  --c-surface: #121a2c;
+  --c-surface-2: #172036;
+  --c-surface-hover: #1d2740;
+  --c-border: #222c44;
+  --c-border-strong: #2f3a56;
+  --c-text: #e8ecf5;
+  --c-text-secondary: #a3adc2;
+  --c-text-muted: #6d7891;
+
+  --sidebar-bg: #080e1c;
+  --sidebar-border: #1a2338;
 
   --c-success: #3ecf8e;
   --c-success-soft: rgba(62, 207, 142, 0.14);
@@ -115,15 +133,15 @@
   --c-warning-soft: rgba(245, 181, 68, 0.14);
   --c-error: #f0564b;
   --c-error-soft: rgba(240, 86, 75, 0.14);
-  --c-info: #5aa2f7;
-  --c-info-soft: rgba(90, 162, 247, 0.14);
+  --c-info: #38bdf8;
+  --c-info-soft: rgba(56, 189, 248, 0.14);
   --c-purple: #a78bfa;
   --c-purple-soft: rgba(167, 139, 250, 0.14);
 
-  --c-overlay: rgba(6, 7, 9, 0.66);
+  --c-overlay: rgba(3, 6, 14, 0.7);
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a3a6ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 
-  --c-dark: #141517;
+  --c-dark: #0b1120;
 
   --shadow-xs: none;
   --shadow-card: none;

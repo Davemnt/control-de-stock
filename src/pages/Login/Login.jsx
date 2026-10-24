@@ -113,8 +113,8 @@ const Login = () => {
 
           <div className="login-hero-panel">
             <div className="login-hero-copy">
-              <h2>Todo tu equipamiento técnico, bajo control.</h2>
-              <p>Gestiona audio, iluminación, video y estructuras de cada evento desde un solo lugar.</p>
+              <h2>Tu inventario, bajo control.</h2>
+              <p>Materiales, movimientos y préstamos de tu empresa, organizados en un solo lugar.</p>
             </div>
 
             <ul className="login-features">

@@ -172,7 +172,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--c-brand), #f59048);
+  background: linear-gradient(135deg, var(--c-brand), var(--c-brand-light, var(--c-brand)));
   color: #fff;
   display: flex;
   align-items: center;

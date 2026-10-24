@@ -74,15 +74,15 @@
   border-radius: 3px;
 }
 
-.theme-light .theme-preview { background: #f4f5f7; }
+.theme-light .theme-preview { background: #f4f6fb; }
 .theme-light .theme-preview span:nth-child(1) { background: #ffffff; }
-.theme-light .theme-preview span:nth-child(2) { background: #e5622a; width: 40%; }
+.theme-light .theme-preview span:nth-child(2) { background: #2f5bea; width: 40%; }
 .theme-light .theme-preview span:nth-child(3) { background: #ffffff; }
 
-.theme-dark .theme-preview { background: #141517; }
-.theme-dark .theme-preview span:nth-child(1) { background: #1c1d20; }
-.theme-dark .theme-preview span:nth-child(2) { background: #e5622a; width: 40%; }
-.theme-dark .theme-preview span:nth-child(3) { background: #232428; }
+.theme-dark .theme-preview { background: #0b1120; }
+.theme-dark .theme-preview span:nth-child(1) { background: #121a2c; }
+.theme-dark .theme-preview span:nth-child(2) { background: #2f5bea; width: 40%; }
+.theme-dark .theme-preview span:nth-child(3) { background: #172036; }
 
 .theme-option-label {
   display: flex;
